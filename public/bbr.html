@@ -9062,8 +9062,8 @@ function startMatch() {
     ship.passive = getPassive(ship.shipType, ship.team || 0);
     ship.maneuver = getManeuver(ship.shipType, ship.team || 0);
     // ═══ STARCHIP OVERRIDE ═══
-    if (_starchipConfigs && _starchipConfigs[si]) {
-      const _sc = _starchipConfigs[si];
+    if (_starchipConfigs && _starchipConfigs[i]) {
+      const _sc = _starchipConfigs[i];
       ship.shipType = _sc.design;
       ship.color = _sc.color;
       ship.origColor = _sc.color;
@@ -9662,6 +9662,12 @@ requestAnimationFrame(gameLoop);
 
 // ─── PWA SERVICE WORKER ──────────────────────────────────────
 if ('serviceWorker' in navigator) {
+  // ═══ STARCHIP AUTO-START ═══
+  // If launched from arena with a lineup, skip pregame and start immediately
+  if (localStorage.getItem('starchip_lineup')) {
+    startMatch();
+  }
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
