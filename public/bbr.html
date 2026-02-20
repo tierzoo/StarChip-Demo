@@ -1316,10 +1316,10 @@ const CFG = {
 
 // ─── NAMES & COLORS ───────────────────────────────────────────
 const PILOT_NAMES = [
-  'RED', 'GREEN', 'BLUE', 'ORANGE',
-  'PINK', 'CYAN', 'LIME', 'CORAL',
-  'PURPLE', 'WHITE', 'YELLOW', 'MAGENTA',
-  'SKY', 'GOLD', 'SILVER', 'VIOLET'
+  'FIGHTER', 'LEAF', 'BOMBER', 'ARROW',
+  'HEART', 'JET', 'MONSTER', 'EDGE',
+  'GHOST', 'POINT', 'TWISTER', 'SURVIVOR',
+  'HAWK', 'FRIGATE', 'CRESCENT', 'ENFORCER'
 ];
 
 // Ship design defs keyed by index string for dropdown compatibility
@@ -1337,6 +1337,13 @@ const PILOT_COLORS = [
   '#aa44ff', '#ffffff', '#ffff44', '#ff00ff',
   '#55bbff', '#ffcc00', '#bbbbcc', '#8844dd'
 ];
+const COLOR_NAMES = [
+  'RED', 'GREEN', 'BLUE', 'ORANGE',
+  'PINK', 'CYAN', 'LIME', 'CORAL',
+  'PURPLE', 'WHITE', 'YELLOW', 'MAGENTA',
+  'SKY', 'GOLD', 'SILVER', 'VIOLET'
+];
+function colorName(hex) { const i = PILOT_COLORS.indexOf(hex); return i >= 0 ? COLOR_NAMES[i] : ''; }
 
 // ─── PREDETERMINED PERSONALITY PROFILES ───────────────────────
 const PRESET_PROFILES = [
@@ -9095,7 +9102,7 @@ function startMatch() {
       ship.shipType = _sc.design;
       ship.color = _sc.color;
       ship.origColor = _sc.color;
-      ship.name = _sc.playerName || PILOT_NAMES[_sc.design];
+      ship.name = (colorName(_sc.color) + ' ' + PILOT_NAMES[_sc.design]).trim();
       if (WEAPON_DEFS[_sc.weapon]) ship.weapon = {...WEAPON_DEFS[_sc.weapon]};
       if (_sc.passive) ship.passive = _sc.passive;
       if (_sc.maneuver) ship.maneuver = _sc.maneuver;
