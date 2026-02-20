@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#000">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -12,8 +12,10 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1094,6 +1096,7 @@
 </style>
 </head>
 <body>
+<div id="fadeOverlay" style="position:fixed;inset:0;background:#000;z-index:99999;pointer-events:none;transition:opacity 0.5s ease"></div>
 
 <canvas id="game"></canvas>
 
@@ -6947,10 +6950,11 @@ function killShip(ship, killerId) {
   }
   if (killerId < 0) asteroidKills++;
 
-  const killerName = killer ? killer.name : 'ASTEROID';
+  const killerLabel = killer ? (killer.playerName ? killer.playerName + ' — ' + killer.name : killer.name) : 'ASTEROID';
   const killerColor = killer ? killer.color : '#888';
-  ship.killedBy = killerName;
-  addKillMessage(killerName, killerColor, ship.name, ship.color);
+  ship.killedBy = killerLabel;
+  const victimLabel = ship.playerName ? ship.playerName + ' — ' + ship.name : ship.name;
+  addKillMessage(killerLabel, killerColor, victimLabel, ship.color);
 
   const aliveCount = ships.filter(s => s.alive).length;
   // Check win: FFA = 1 ship left, Teams = 1 team left
@@ -9373,6 +9377,7 @@ function startMatch() {
           // Build teamAssignments: array of arrays of ship indices
           // Here indices refer to position in the flat _scShips array (0..n-1)
           teamAssignments = Object.values(playerGroups);
+          teamNames = Object.keys(playerGroups);
           // Clear any leftover team weapon/design/passive pools
           teamWeapons = teamAssignments.map(() => []);
           teamShipDesigns = teamAssignments.map(() => []);
@@ -9408,6 +9413,7 @@ function startMatch() {
       ship.shipType = _sc.design;
       ship.color = _sc.color;
       ship.origColor = _sc.color;
+      ship.playerName = _sc.playerName || null;
       ship.name = (_sc.weapon) ? generateShipName(_sc.design, _sc._ci, _sc.weapon, _sc.passive, _sc.maneuver, _sc._ti) : (colorName(_sc.color) + ' ' + PILOT_NAMES[_sc.design]).trim();
       if (WEAPON_DEFS[_sc.weapon]) ship.weapon = {...WEAPON_DEFS[_sc.weapon]};
       if (_sc.passive) ship.passive = _sc.passive;
@@ -9659,7 +9665,7 @@ function showWinner() {
       nameEl.style.color = '#888';
     }
   } else if (winner) {
-    nameEl.textContent = winner.name;
+    nameEl.textContent = winner.playerName ? winner.playerName + ' — ' + winner.name : winner.name;
     nameEl.style.color = winner.color;
   } else {
     nameEl.textContent = 'DRAW';
@@ -9768,7 +9774,7 @@ function showWinner() {
         ns2.className = 'rank-name';
         ns2.style.color = ship.color;
         ns2.style.fontSize = '12px';
-        ns2.textContent = ship.name;
+        ns2.textContent = ship.playerName ? ship.playerName + ' — ' + ship.name : ship.name;
         nb2.appendChild(ns2);
         row.appendChild(nb2);
         const cs2 = document.createElement('span');
@@ -9805,7 +9811,7 @@ function showWinner() {
     const nameSpan = document.createElement('span');
     nameSpan.className = 'rank-name';
     nameSpan.style.color = ship.color;
-    nameSpan.textContent = ship.name;
+    nameSpan.textContent = ship.playerName ? ship.playerName + ' — ' + ship.name : ship.name;
     nameBlock.appendChild(nameSpan);
     const showAnyTag = settings.showWeaponTag || settings.showPassiveTag || settings.showManeuverTag;
     if (showAnyTag) {
@@ -9917,7 +9923,11 @@ document.getElementById('restart-btn').addEventListener('click', () => {
 
 document.getElementById('arena-btn').addEventListener('click', () => {
   _starchipSavedLineup = null;
-  window.location.href = 'arena.html';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99999;opacity:0;transition:opacity 0.4s ease';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  setTimeout(() => { window.location.href = 'arena.html'; }, 450);
 });
 
 // ─── CAMERA MODE TOGGLE ──────────────────────────────────────
@@ -10023,6 +10033,12 @@ function gameLoop(time) {
 initStars();
 init();
 requestAnimationFrame(gameLoop);
+
+// Fade out entry overlay
+requestAnimationFrame(() => {
+  const fo = document.getElementById('fadeOverlay');
+  if (fo) { fo.style.opacity = '0'; setTimeout(() => fo.remove(), 600); }
+});
 
 // ─── PWA SERVICE WORKER ──────────────────────────────────────
 if ('serviceWorker' in navigator) {
