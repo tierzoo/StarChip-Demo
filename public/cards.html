@@ -191,8 +191,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
-const PILOT_NAMES = ['RED','GREEN','BLUE','ORANGE','PINK','CYAN','LIME','CORAL','PURPLE','WHITE','YELLOW','MAGENTA','SKY','GOLD','SILVER','VIOLET'];
+const PILOT_NAMES = ['FIGHTER','LEAF','BOMBER','ARROW','HEART','JET','MONSTER','EDGE','GHOST','POINT','TWISTER','SURVIVOR','HAWK','FRIGATE','CRESCENT','ENFORCER'];
 const PILOT_COLORS = ['#ff4444','#44ff88','#4488ff','#ffaa22','#dd66bb','#44ffff','#88dd55','#ff6b4a','#aa44ff','#ffffff','#ffff44','#ff00ff','#55bbff','#ffcc00','#bbbbcc','#8844dd'];
+const COLOR_NAMES = ['RED','GREEN','BLUE','ORANGE','PINK','CYAN','LIME','CORAL','PURPLE','WHITE','YELLOW','MAGENTA','SKY','GOLD','SILVER','VIOLET'];
 const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive'];
 const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override'];
 const SHIP_MANEUVERS = ['rapidFire','reverse','mineField','smokescreen','doubleTeam','barrelRoll','repulsor','hyperSpeed','dumpDebris','reflectorShields','shockPulse','turretMode','spinOut','repulsor','panic','quickTurn'];
@@ -260,7 +261,7 @@ PILOT_NAMES.forEach((n, i) => {
   const o = document.createElement('option'); o.value = i; o.textContent = `${n} shape`;
   designSelect.appendChild(o);
 });
-PILOT_NAMES.forEach((n, i) => {
+COLOR_NAMES.forEach((n, i) => {
   const o = document.createElement('option'); o.value = i; o.textContent = n;
   o.style.color = PILOT_COLORS[i]; colorSelect.appendChild(o);
 });
@@ -338,7 +339,7 @@ function makeCard(d, w, p, m, colorIdx, t) {
   drawShipPreview(shipCanvas, d, color);
 
   const name = document.createElement('div'); name.className = 'card-name';
-  name.textContent = PILOT_NAMES[d] + (ci !== d ? ' · ' + PILOT_NAMES[ci] : '');
+  name.textContent = COLOR_NAMES[ci] + ' ' + PILOT_NAMES[d];
 
   const stats = document.createElement('div'); stats.className = 'card-stats';
   stats.innerHTML = [
