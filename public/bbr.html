@@ -6975,7 +6975,7 @@ function killShip(ship, killerId) {
       x: ship.x, y: ship.y,
       color: ship.color,
       killerColor: killerColor,
-      killerName: killerName,
+      killerName: killerLabel,
     };
     playFinaleExplosion();
     spawnExplosion(ship.x, ship.y, killerColor, 60, 300);
