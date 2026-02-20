@@ -1290,6 +1290,7 @@
   <button id="arena-btn" style="display:none;">BACK TO ARENA</button>
 </div>
 
+<script src="namegen.js"></script>
 <script>
 // ─── CONFIG ────────────────────────────────────────────────────
 const CFG = {
@@ -1344,6 +1345,12 @@ const COLOR_NAMES = [
   'SKY', 'GOLD', 'SILVER', 'VIOLET'
 ];
 function colorName(hex) { const i = PILOT_COLORS.indexOf(hex); return i >= 0 ? COLOR_NAMES[i] : ''; }
+
+// ═══════════════════════════════════════════════════════════════
+// STARCHIP PROCEDURAL NAME GENERATOR
+// Each of 6 traits × 16 values = 96 entries, each with 8 adj + 8 nouns
+// Seeded RNG ensures same card always gets same name
+// ═══════════════════════════════════════════════════════════════
 
 // ─── PREDETERMINED PERSONALITY PROFILES ───────────────────────
 const PRESET_PROFILES = [
@@ -1838,8 +1845,8 @@ function startManeuver(ship) {
   if (ship.maneuver === 'shockPulse') {
     // Massive stun pulse — 2x repulsor radius
     const pulseRadius = 700;
-    shockwaves.push({ x: ship.x, y: ship.y, r: 0, maxR: pulseRadius, life: 0.6, maxLife: 0.6, color: '#ffff44' });
-    spawnExplosion(ship.x, ship.y, '#ffff44', 20, 120);
+    shockwaves.push({ x: ship.x, y: ship.y, r: 0, maxR: pulseRadius, life: 0.6, maxLife: 0.6, color: ship.color });
+    spawnExplosion(ship.x, ship.y, ship.color, 20, 120);
     playShootRise();
     // Stun all enemy ships in range
     let stunHit = false;
@@ -1848,6 +1855,7 @@ function startManeuver(ship) {
       if (ship.team > 0 && target.team === ship.team) continue;
       if (dist(ship, target) < pulseRadius) {
         target.stunTimer = 1.75;
+        target.stunColor = ship.color;
         stunHit = true;
         // Stun arc sparks on affected ship
         for (let sp = 0; sp < 4; sp++) {
@@ -1867,7 +1875,7 @@ function startManeuver(ship) {
             y: target.y + rand(-target.r, target.r),
             vx: Math.cos(a) * rand(40, 80), vy: Math.sin(a) * rand(40, 80),
             life: rand(0.15, 0.3), maxLife: 0.3,
-            color: '#ffff44', size: 1.5,
+            color: ship.color, size: 1.5,
             isArc: true, arcPoints: ap,
           });
         }
@@ -3991,6 +3999,9 @@ function init() {
       burnTimer: 0,     // incendiary DoT remaining
       burnDps: 0,       // incendiary damage per second
       iceDotTimer: 0,   // ice rounds DoT remaining
+      // Debuff source colors (attacker's ship color)
+      burnColor: null, iceColor: null, jamColor: null,
+      stunColor: null, overrideColor: null, blindColor: null,
       _bulletThreat: false,
       _emergencyEvade: false,
       team: _teamNum,
@@ -4752,7 +4763,7 @@ function update(rawDt) {
         x: ship.x + rand(-ship.r, ship.r), y: ship.y + rand(-ship.r, ship.r),
         vx: rand(-20, 20), vy: rand(-60, -30),
         life: rand(0.2, 0.4), maxLife: 0.4,
-        color: Math.random() < 0.5 ? '#ff6600' : '#ffaa00', size: rand(2, 4),
+        color: ship.burnColor || '#ff6600', size: rand(2, 4),
       });
     }
     // Ice Rounds: diamond and snowflake particles emitted from affected ship
@@ -4766,7 +4777,7 @@ function update(rawDt) {
         vx: Math.cos(perp) * side * rand(30, 60) + rand(-10, 10),
         vy: Math.sin(perp) * side * rand(30, 60) + rand(-10, 10) - 15,
         life: 0.4, maxLife: 0.4,
-        color: '#55bbff', size: rand(3, 6),
+        color: ship.iceColor || '#55bbff', size: rand(3, 6),
         isDiamond: iceType === 'diamond', isSnowflake: iceType === 'snowflake',
         spinAng: rand(0, Math.PI * 2),
       });
@@ -4783,7 +4794,7 @@ function update(rawDt) {
         vx: Math.cos(perp) * side * rand(30, 70),
         vy: Math.sin(perp) * side * rand(30, 70),
         life: 0.25, maxLife: 0.25,
-        color: '#ffaa00', size: rand(1.5, 3), isLine: true, lineAng: perp, lineLen: rand(6, 12),
+        color: ship.jamColor || '#ffaa00', size: rand(1.5, 3), isLine: true, lineAng: perp, lineLen: rand(6, 12),
       });
     }
 
@@ -4805,7 +4816,7 @@ function update(rawDt) {
         x: ship.x + Math.cos(a) * d, y: ship.y + Math.sin(a) * d,
         vx: rand(-20, 20), vy: rand(-20, 20),
         life: 0.18, maxLife: 0.18,
-        color: '#ffff44', size: 1.5,
+        color: ship.stunColor || '#ffff44', size: 1.5,
         isArc: true, arcPoints: ap,
       });
     }
@@ -4819,7 +4830,7 @@ function update(rawDt) {
         x: fx + rand(-5, 5), y: fy + rand(-5, 5),
         vx: Math.cos(a) * rand(20, 60), vy: Math.sin(a) * rand(20, 60),
         life: 0.25, maxLife: 0.25,
-        color: '#8844dd', size: rand(2, 4.5),
+        color: ship.overrideColor || '#8844dd', size: rand(2, 4.5),
       });
     }
 
@@ -4830,7 +4841,7 @@ function update(rawDt) {
       shockwaves.push({
         x: fx + rand(-6, 6), y: fy + rand(-6, 6),
         r: 0, maxR: rand(12, 25), life: 0.2, maxLife: 0.2,
-        color: '#ff8800', ellipse: true, ellipseAng: ship.ang + rand(-0.3, 0.3),
+        color: ship.blindColor || '#ff8800', ellipse: true, ellipseAng: ship.ang + rand(-0.3, 0.3),
       });
     }
     ship.fireCooldown = Math.max(0, ship.fireCooldown - dt);
@@ -5460,11 +5471,8 @@ function update(rawDt) {
     }
 
     // Debuff passive aura trails — particles perpendicular to bullet path
-    const debuffColors = {
-      iceRounds: '#55bbff', jamRounds: '#ff4444', stunShock: '#ffff44',
-      override: '#8844dd', blindRounds: '#ff8800',
-    };
-    if (debuffColors[b.ownerPassive]) {
+    const debuffPassives = ['iceRounds', 'jamRounds', 'stunShock', 'override', 'blindRounds'];
+    if (debuffPassives.includes(b.ownerPassive)) {
       const bSpd = Math.hypot(b.vx, b.vy);
       // Faster bullets spawn trails more reliably (lightning at 1600 u/s needs help)
       let spawnChance = Math.min(0.95, 0.5 + bSpd / 3000);
@@ -5488,7 +5496,7 @@ function update(rawDt) {
           particles.push({
             x: b.x, y: b.y, vx: b.vx * 0.1, vy: b.vy * 0.1,
             life: rand(0.12, 0.22), maxLife: 0.22,
-            color: '#ffff44', size: 1.5,
+            color: b.color, size: 1.5,
             isArc: true, arcPoints,
           });
         } else if (b.ownerPassive === 'iceRounds') {
@@ -5503,7 +5511,7 @@ function update(rawDt) {
             vx: Math.cos(perpAng) * driftSpd * side + b.vx * 0.05,
             vy: Math.sin(perpAng) * driftSpd * side + b.vy * 0.05,
             life: rand(0.2, 0.4), maxLife: 0.4,
-            color: '#55bbff', size: rand(2, 4.5),
+            color: b.color, size: rand(2, 4.5),
             isDiamond: iceType === 'diamond', isSnowflake: iceType === 'snowflake',
             spinAng: rand(0, Math.PI * 2),
           });
@@ -5517,7 +5525,7 @@ function update(rawDt) {
             vx: Math.cos(perpAng) * driftSpd * side + b.vx * 0.1,
             vy: Math.sin(perpAng) * driftSpd * side + b.vy * 0.1,
             life: rand(0.12, 0.25), maxLife: 0.25,
-            color: debuffColors[b.ownerPassive],
+            color: b.color,
             size: rand(1, 2.5),
           });
         }
@@ -5643,11 +5651,11 @@ function update(rawDt) {
       // Near-miss debuff detection: 2x hit radius applies effect only (no damage) — skip for friendlies
       const attacker = shipById[b.owner];
       if (attacker && !isFriendly && bDist < (ship.r + 4) * 2 && bDist >= ship.r + 4) {
-        if (attacker.passive === 'blindRounds') ship.blindTimer = 3;
-        if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; }
-        if (attacker.passive === 'jamRounds') ship.jamSlow = 4;
-        if (attacker.passive === 'stunShock') ship.stunTimer = 1.75;
-        if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; }
+        if (attacker.passive === 'blindRounds') { ship.blindTimer = 3; ship.blindColor = b.color; }
+        if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = b.color; }
+        if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = b.color; }
+        if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = b.color; }
+        if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = b.color; }
         if (['blindRounds','iceRounds','jamRounds','stunShock','override'].includes(attacker.passive)) playDebuff();
       }
 
@@ -5703,6 +5711,7 @@ function update(rawDt) {
             ship.hp -= dmg * 0.5;
             ship.burnTimer = 2.0;
             ship.burnDps = (dmg * 0.5) / 2.0; // remaining 50% over 2s
+            ship.burnColor = b.color;
           } else {
             ship.hp -= dmg;
           }
@@ -5737,11 +5746,11 @@ function update(rawDt) {
           // Ice/Jam rounds: apply debuff based on attacker's passive
           const attacker = shipById[b.owner];
           if (attacker) {
-            if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; }
-            if (attacker.passive === 'jamRounds') ship.jamSlow = 4;
-            if (attacker.passive === 'stunShock') ship.stunTimer = 1.75;
-            if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; }
-            if (attacker.passive === 'blindRounds') ship.blindTimer = 3;
+            if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = b.color; }
+            if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = b.color; }
+            if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = b.color; }
+            if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = b.color; }
+            if (attacker.passive === 'blindRounds') { ship.blindTimer = 3; ship.blindColor = b.color; }
             if (['blindRounds','iceRounds','jamRounds','stunShock','override','incendiary'].includes(attacker.passive)) playDebuff();
           }
           if (ship.hp <= 0) {
@@ -5948,13 +5957,14 @@ function update(rawDt) {
             ship.lastAttacker = p.incOwner;
             ship.lastAttackerTime = gameTime;
             ship.hpBarTimer = 0.75;
-            spawnExplosion(p.x, p.y, '#f80', 4, 30);
+            spawnExplosion(p.x, p.y, p.color || '#f80', 4, 30);
             const attacker = shipById[p.incOwner];
+            const _trailColor = p.color || (attacker ? attacker.color : '#f80');
             if (attacker) {
-              if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; }
-              if (attacker.passive === 'jamRounds') ship.jamSlow = 4;
-              if (attacker.passive === 'stunShock') ship.stunTimer = 1.75;
-              if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; }
+              if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = _trailColor; }
+              if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = _trailColor; }
+              if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = _trailColor; }
+              if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = _trailColor; }
             }
             if (ship.passive === 'hitInvuln' && ship.hp > 0 && ship.hitInvulnCooldown <= 0) {
               ship.invuln = 1; ship.hitInvulnCooldown = 8;
@@ -9102,7 +9112,7 @@ function startMatch() {
       ship.shipType = _sc.design;
       ship.color = _sc.color;
       ship.origColor = _sc.color;
-      ship.name = (colorName(_sc.color) + ' ' + PILOT_NAMES[_sc.design]).trim();
+      ship.name = (_sc.weapon) ? generateShipName(_sc.design, _sc._ci, _sc.weapon, _sc.passive, _sc.maneuver, _sc._ti) : (colorName(_sc.color) + ' ' + PILOT_NAMES[_sc.design]).trim();
       if (WEAPON_DEFS[_sc.weapon]) ship.weapon = {...WEAPON_DEFS[_sc.weapon]};
       if (_sc.passive) ship.passive = _sc.passive;
       if (_sc.maneuver) ship.maneuver = _sc.maneuver;
