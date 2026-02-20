@@ -18,7 +18,12 @@ const server = http.createServer((req, res) => {
   };
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); res.end('Not found'); return; }
-    res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+    const headers = { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' };
+    // Prevent caching for HTML and JS so updates take effect immediately
+    if (ext === '.html' || ext === '.js') {
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 });
