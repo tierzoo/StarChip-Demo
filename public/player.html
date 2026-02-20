@@ -240,8 +240,10 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 // ─── SHIP DATA ───
-const PILOT_NAMES = ['RED','GREEN','BLUE','ORANGE','PINK','CYAN','LIME','CORAL','PURPLE','WHITE','YELLOW','MAGENTA','SKY','GOLD','SILVER','VIOLET'];
+const PILOT_NAMES = ['FIGHTER','LEAF','BOMBER','ARROW','HEART','JET','MONSTER','EDGE','GHOST','POINT','TWISTER','SURVIVOR','HAWK','FRIGATE','CRESCENT','ENFORCER'];
 const PILOT_COLORS = ['#ff4444','#44ff88','#4488ff','#ffaa22','#dd66bb','#44ffff','#88dd55','#ff6b4a','#aa44ff','#ffffff','#ffff44','#ff00ff','#55bbff','#ffcc00','#bbbbcc','#8844dd'];
+const COLOR_NAMES = ['RED','GREEN','BLUE','ORANGE','PINK','CYAN','LIME','CORAL','PURPLE','WHITE','YELLOW','MAGENTA','SKY','GOLD','SILVER','VIOLET'];
+function colorName(hex) { const i = PILOT_COLORS.indexOf(hex); return i >= 0 ? COLOR_NAMES[i] : ''; }
 const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive'];
 const WEAPON_NAMES = {
   alternating:'Alternator', chaotic:'Chaotic Burst', grenade:'Grenade', flamethrower:'Flamethrower',
@@ -384,7 +386,7 @@ function renderSavedFleet() {
     canvas.width = 72; canvas.height = 72; canvas.className = 'ship-card-icon';
     drawShipPreview(canvas, ship.d, ship.c);
     const info = document.createElement('div'); info.className = 'ship-card-info';
-    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${PILOT_NAMES[ship.d]}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
+    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${colorName(ship.c)} ${PILOT_NAMES[ship.d]}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
     const addIcon = document.createElement('div'); addIcon.className = 'add-icon';
     addIcon.textContent = alreadyAdded ? '✓' : '+';
     card.onclick = () => {
@@ -458,7 +460,7 @@ function renderShipList() {
     canvas.width = 72; canvas.height = 72; canvas.className = 'ship-card-icon';
     drawShipPreview(canvas, ship.d, ship.c);
     const info = document.createElement('div'); info.className = 'ship-card-info';
-    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${PILOT_NAMES[ship.d]}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
+    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${colorName(ship.c)} ${PILOT_NAMES[ship.d]}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
     const removeBtn = document.createElement('button'); removeBtn.className = 'ship-card-remove'; removeBtn.textContent = '✕';
     removeBtn.onclick = () => { myShips.splice(i, 1); renderShipList(); ws.send(JSON.stringify({ type: 'remove_ship', index: i })); renderSavedFleet(); };
     card.appendChild(canvas); card.appendChild(info); card.appendChild(removeBtn);
