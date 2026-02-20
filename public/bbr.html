@@ -9134,6 +9134,21 @@ function startMatch() {
     document.getElementById('countdown-bets').textContent = matchMode === 'teams' ? 'CHOOSE YOUR TEAM!' : 'PLACE YOUR BETS!';
     document.getElementById('countdown-overlay').classList.remove('hidden');
   }
+
+  // ═══ STARCHIP: Pre-position camera so countdown doesn't have jarring zoom ═══
+  if (_starchipConfigs && ships.length > 0) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const s of ships) {
+      minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
+      minY = Math.min(minY, s.y); maxY = Math.max(maxY, s.y);
+    }
+    cameraX = targetCamX = (minX + maxX) / 2;
+    cameraY = targetCamY = (minY + maxY) / 2;
+    const camPad = 200 + ships.length * 15;
+    const zX = W / (maxX - minX + camPad);
+    const zY = H / (maxY - minY + camPad);
+    camZoom = targetZoom = Math.max(0.15, Math.min(1.5, Math.min(zX, zY)));
+  }
 }
 
 function buildCountdownRoster() {
