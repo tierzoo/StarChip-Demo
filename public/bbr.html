@@ -9124,9 +9124,6 @@ function startMatch() {
   // Enter countdown phase (skip for match logger to keep data collection fast)
   if (settings.matchLogger) {
     showScoreboard = true;
-  } else if (_starchipConfigs) {
-    // StarChip demo: skip countdown, start immediately
-    showScoreboard = true;
   } else {
     countdown = true;
     const cdDur = tourneyActive ? 3 : COUNTDOWN_DURATION;
