@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarChip Arena</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#04040a">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #04040a; color: #d8dce6;
+    font-family: 'Rajdhani', -apple-system, sans-serif;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  /* ── STARFIELD ── */
+  .starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+  .asteroid { position: absolute; border-radius: 30% 70% 50% 50%; opacity: 0.06; transform: rotate(var(--rot)); }
+  @keyframes twinkle { 0%,100%{opacity:var(--base-o)} 50%{opacity:var(--peak-o)} }
+  @keyframes drift { 0%{transform:translate(0,0) rotate(var(--rot))} 100%{transform:translate(var(--dx),var(--dy)) rotate(calc(var(--rot)+20deg))} }
+
+  /* ── LAYOUT ── */
+  .header {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    background: rgba(4,4,10,0.6); backdrop-filter: blur(10px);
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px; font-weight: 900; letter-spacing: 3px; color: #fff;
+  }
+  .logo span { color: #00e87b; }
+  .player-url {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 1px;
+    background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .main {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center; padding: 40px 32px;
+  }
+
+  /* ── ROOM CODE ── */
+  .code-section { text-align: center; margin-bottom: 40px; }
+  .code-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; letter-spacing: 6px; color: rgba(255,255,255,0.3); margin-bottom: 12px;
+  }
+  .room-code {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 72px; font-weight: 900; letter-spacing: 16px; color: #00e87b;
+    text-shadow: 0 0 60px rgba(0,232,123,0.25), 0 0 120px rgba(0,232,123,0.08);
+  }
+  .code-hint { font-size: 13px; color: rgba(255,255,255,0.2); margin-top: 8px; }
+
+  /* ── GLASS PANELS ── */
+  .glass-panel {
+    background: rgba(255,255,255,0.02); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 920px; margin-bottom: 20px;
+  }
+
+  /* ── ROSTER ── */
+  .roster-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .roster-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; letter-spacing: 4px; color: rgba(255,255,255,0.3); font-weight: 700;
+  }
+  .ship-total {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 36px; font-weight: 900; color: #fff; line-height: 1;
+  }
+  .ship-total span { color: rgba(255,255,255,0.3); font-size: 18px; font-weight: 400; }
+
+  .roster-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;
+  }
+
+  .roster-card {
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px; padding: 16px;
+    display: flex; flex-direction: column; align-items: center;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative; overflow: hidden;
+  }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.8) translateY(10px); } }
+  .roster-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--ship-color);
+    box-shadow: 0 0 12px var(--ship-color);
+  }
+  .roster-card canvas { margin-bottom: 8px; }
+  .roster-card-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px; font-weight: 700; color: var(--ship-color); letter-spacing: 2px;
+  }
+  .roster-card-weapon {
+    font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 1px; margin-top: 2px;
+  }
+  .roster-card-player {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: rgba(255,255,255,0.15); margin-top: 6px; letter-spacing: 1px;
+  }
+
+  /* ── PLAYERS ── */
+  .players-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; min-height: 36px; }
+  .player-chip {
+    background: rgba(0,232,123,0.06); border: 1px solid rgba(0,232,123,0.12);
+    border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #d8dce6;
+    display: flex; align-items: center; gap: 6px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } }
+  .player-dot { width: 8px; height: 8px; border-radius: 50%; background: #00e87b; box-shadow: 0 0 8px #00e87b; }
+
+  /* ── WAITING ── */
+  .waiting {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 0;
+  }
+  .waiting-hex { font-size: 24px; color: rgba(255,255,255,0.15); animation: pulse 2.5s infinite; letter-spacing: 8px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .waiting-text { font-size: 14px; color: rgba(255,255,255,0.15); margin-top: 8px; letter-spacing: 2px; }
+
+  /* ── TEAM TOGGLE ── */
+  .team-toggle {
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+    margin-bottom: 20px; user-select: none;
+  }
+  .team-toggle input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: #00e87b; cursor: pointer;
+  }
+  .team-toggle-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; color: rgba(255,255,255,0.6);
+  }
+  .team-toggle-hint {
+    font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 1px;
+  }
+
+  /* ── START BUTTON ── */
+  .start-section { margin-top: 24px; text-align: center; }
+  .start-btn {
+    font-family: 'Orbitron', sans-serif;
+    background: rgba(0,232,123,0.15); color: #00e87b;
+    border: 1px solid rgba(0,232,123,0.3); border-radius: 14px;
+    font-size: 18px; font-weight: 900; letter-spacing: 5px;
+    padding: 20px 64px; cursor: pointer; transition: all 0.3s;
+    text-shadow: 0 0 20px rgba(0,232,123,0.3);
+  }
+  .start-btn:hover {
+    background: rgba(0,232,123,0.25); border-color: rgba(0,232,123,0.5);
+    box-shadow: 0 0 40px rgba(0,232,123,0.1); transform: scale(1.03);
+  }
+  .start-btn:disabled {
+    background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.05); cursor: not-allowed;
+    transform: none; box-shadow: none; text-shadow: none;
+  }
+  .start-hint { font-size: 12px; color: rgba(255,255,255,0.15); margin-top: 10px; }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 2;
+    background: rgba(4,4,10,0.8); backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding: 10px 32px; display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-family: 'Share Tech Mono', monospace;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .status-dot.connected { background: #00e87b; box-shadow: 0 0 8px #00e87b; }
+  .status-dot.disconnected { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
+</style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+
+<div class="header">
+  <div class="logo">BLAST BELT <span>ROYALE</span></div>
+  <div class="player-url" id="playerUrl">Player URL: loading...</div>
+</div>
+
+<div class="main">
+  <div class="code-section">
+    <div class="code-label">ROOM CODE</div>
+    <div class="room-code" id="roomCode">····</div>
+    <div class="code-hint">Players enter this code on their phones to join</div>
+  </div>
+
+  <div class="glass-panel">
+    <div class="roster-header">
+      <div class="roster-title">CONNECTED PILOTS</div>
+    </div>
+    <div class="players-bar" id="playersBar"></div>
+  </div>
+
+  <div class="glass-panel">
+    <div class="roster-header">
+      <div class="roster-title">SCANNED STARCHIPS</div>
+      <div class="ship-total"><span id="shipTotal">0</span></div>
+    </div>
+    <div class="roster-grid" id="rosterGrid"></div>
+    <div class="waiting" id="waitingMsg">
+      <div class="waiting-hex">⬡ ⬡ ⬡</div>
+      <div class="waiting-text">Waiting for players to scan StarChips...</div>
+    </div>
+  </div>
+
+  <div class="start-section">
+    <label class="team-toggle" id="teamToggle">
+      <input type="checkbox" id="teamCheck" checked>
+      <span class="team-toggle-label">TEAM MODE</span>
+      <span class="team-toggle-hint" id="teamHint">Ships from the same player fight together</span>
+    </label>
+    <button class="start-btn" id="startBtn" disabled>START MATCH</button>
+    <div class="start-hint" id="startHint">Need at least 2 StarChips to start</div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div><span class="status-dot" id="statusDot"></span><span id="statusText">Connecting...</span></div>
+  <div id="serverInfo"></div>
+</div>
+
+<script>
+// ─── SHIP DATA ───
+const PILOT_NAMES = ['RED','GREEN','BLUE','ORANGE','PINK','CYAN','LIME','CORAL','PURPLE','WHITE','YELLOW','MAGENTA','SKY','GOLD','SILVER','VIOLET'];
+const PILOT_COLORS = ['#ff4444','#44ff88','#4488ff','#ffaa22','#dd66bb','#44ffff','#88dd55','#ff6b4a','#aa44ff','#ffffff','#ffff44','#ff00ff','#55bbff','#ffcc00','#bbbbcc','#8844dd'];
+const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive'];
+const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override'];
+const SHIP_MANEUVERS = ['rapidFire','reverse','mineField','smokescreen','doubleTeam','barrelRoll','repulsor','hyperSpeed','dumpDebris','reflectorShields','shockPulse','turretMode','spinOut','repulsor','panic','quickTurn'];
+const WEAPON_NAMES = {
+  alternating:'Alternator', chaotic:'Chaotic Burst', grenade:'Grenade', flamethrower:'Flamethrower',
+  gatling:'Gatling Gun', homing:'Homing Missiles', snake:'Snake Shot', shotgun:'Shotgun',
+  scrap:'Scrap Cannon', basic:'Basic Blaster', lightning:'Lightning Bolt', sniper:'Sniper Beam',
+  cyclone:'Cyclone Shot', drone:'Drone Array', crossshot:'Cross-Shot', concussive:'Scatterburst'
+};
+const SHIP_SHAPES = [
+  [[-.1,-.15],[-.45,-.4],[-.2,-.4],[0,-.5],[-.2,-.65],[-.7,-.65],[-.7,-.4],[-.4,0],[-.75,.4],[-.75,.6],[-.5,.6],[-.2,.6],[0,.5],[-.2,.4],[-.45,.4],[-.1,.15],[.45,.2],[.6,.15],[.65,.1],[.75,.1],[.925,0],[.75,-.1],[.65,-.1],[.6,-.15],[.45,-.2]],
+  [[-1,0],[-.7,-.1],[-.75,-.4],[-.4,-.85],[-.25,-.7],[-.3,-.15],[0,-.5],[.3,-.25],[.2,0],[.5,-.15],[1,0],[.2,.45],[-.15,.25],[-.25,.65],[-.4,.8],[-.7,.45],[-.7,.1]],
+  [[1,0],[.75,-.2],[-.15,-1],[-.05,-.4],[-.35,-.25],[-.55,0],[-.35,.25],[-.05,.45],[-.15,1],[.75,.2]],
+  [[1,0],[-.8,-.7],[-.65,-.2],[.1,0],[-.65,.2],[-.8,.7]],
+  [[-.7,-.65],[-.5,-.75],[.15,-.55],[1,0],[.15,.55],[-.5,.75],[-.7,.65],[-.75,.35],[-.5,.1],[-.35,0],[-.5,-.1],[-.75,-.4]],
+  [[-.15,-.65],[-.8,-.65],[-.4,0],[-.8,.65],[-.2,.6],[-.45,.4],[1,0],[-.45,-.45]],
+  [[.7,-.55],[.3,-1],[-.75,-.7],[-.85,-.2],[-.5,0],[-.85,.25],[-.7,.75],[.4,.95],[.65,.55],[.25,.7],[-.35,.5],[.2,.3],[1.1,0],[.2,-.25],[-.35,-.55],[.2,-.7]],
+  [[.55,-.25],[.1,-.65],[.1,-.2],[-.65,-.9],[-.45,-.1],[-1,0],[-.45,.15],[-.65,.9],[.1,.15],[.1,.6],[.55,.2],[.6,.5],[1,0],[.6,-.6]],
+  [[-.75,-.8],[.1,-.5],[-.85,-.2],[.2,0],[-.85,.25],[.1,.55],[-.75,.8],[.1,.75],[.6,.3],[1,0],[.6,-.3],[.1,-.7]],
+  [[1,0],[-.7,-.65],[-.4,0],[-.7,.65]],
+  [[1.2,0],[-.4,-.55],[-.6,-.45],[-.7,-.65],[-.2,-.2],[-.2,-.1],[-.85,0],[-.25,.05],[-.25,.2],[-.55,.4],[-.45,.65],[-.7,.65],[0,.3],[.15,-.05],[.25,.2],[.55,-.05],[.75,.25],[.85,.05]],
+  [[.95,0],[-.9,-.7],[-.5,0],[-.9,.65],[.05,.3],[-.4,-.3],[.3,.15],[.15,-.2],[.6,.1]],
+  [[.25,-.15],[.5,-.25],[1,0],[.5,.25],[.25,.15],[0,.25],[.2,.45],[.35,.75],[.1,.95],[-.5,.95],[0,.7],[-.25,.6],[-.1,.5],[-.4,.25],[-.6,.25],[-1.05,.35],[-1,0],[-1.05,-.4],[-.6,-.25],[-.4,-.25],[-.25,-.35],[-.05,-.5],[-.25,-.6],[0,-.7],[-.5,-.95],[.1,-.95],[.35,-.75],[.2,-.45],[0,-.25]],
+  [[.99,0],[-.5,.85],[-.69,.55],[-.5,.35],[-.79,.4],[-.99,0],[-.79,-.4],[-.45,-.3],[-.69,-.55],[-.5,-.84]],
+  [[.85,-.5],[.75,-.65],[.5,-.85],[.25,-.95],[0,-1],[-.25,-.95],[-.5,-.85],[-.75,-.65],[-.85,-.5],[-1,0],[-.85,.5],[-.65,.75],[-.25,.95],[0,1],[.25,.95],[.55,.85],[.85,.55],[-.25,.65],[-.2,.25],[-.3,.1],[.25,0],[-.3,-.1],[-.2,-.25],[-.25,-.6]],
+  [[.35,-.3],[.3,-.5],[-.25,-.95],[-.5,-.85],[-.1,-.3],[-.3,-.2],[-1,-.35],[-.8,-.1],[-.1,0],[-.1,0],[-.8,.1],[-1,.35],[-.3,.2],[-.1,.3],[-.5,.85],[-.25,.95],[.3,.5],[.35,.3],[.95,.2],[1.05,0],[.95,-.2]],
+];
+
+function drawShipPreview(canvas, designIdx, color) {
+  const size = canvas.width, ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, size, size);
+  const verts = SHIP_SHAPES[designIdx] || SHIP_SHAPES[9];
+  const r = size * 0.35;
+  ctx.save(); ctx.translate(size/2, size/2);
+  ctx.shadowColor = color; ctx.shadowBlur = size * 0.15;
+  ctx.strokeStyle = color; ctx.lineWidth = Math.max(1.5, size * 0.06);
+  ctx.fillStyle = color + '33'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(verts[0][0]*r, verts[0][1]*r);
+  for (let i = 1; i < verts.length; i++) ctx.lineTo(verts[i][0]*r, verts[i][1]*r);
+  ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+}
+
+// ─── STATE ───
+const players = {};
+const allShips = [];
+let ws;
+
+// ─── DOM ───
+const roomCode = document.getElementById('roomCode');
+const playersBar = document.getElementById('playersBar');
+const rosterGrid = document.getElementById('rosterGrid');
+const shipTotal = document.getElementById('shipTotal');
+const waitingMsg = document.getElementById('waitingMsg');
+const startBtn = document.getElementById('startBtn');
+const startHint = document.getElementById('startHint');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const playerUrl = document.getElementById('playerUrl');
+const serverInfo = document.getElementById('serverInfo');
+const teamCheck = document.getElementById('teamCheck');
+const teamHint = document.getElementById('teamHint');
+
+teamCheck.onchange = () => {
+  teamHint.textContent = teamCheck.checked
+    ? 'Ships from the same player fight together' : 'Every ship for themselves';
+};
+
+// ─── CONNECT ───
+function connect() {
+  const loc = window.location;
+  const proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${proto}//${loc.host}`;
+  playerUrl.textContent = `Player URL: ${loc.protocol}//${loc.host}/player.html`;
+  serverInfo.textContent = loc.host;
+  ws = new WebSocket(url);
+
+  ws.onopen = () => {
+    statusDot.className = 'status-dot connected'; statusText.textContent = 'Connected';
+    ws.send(JSON.stringify({ type: 'create_room' }));
+  };
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    switch (msg.type) {
+      case 'room_created': roomCode.textContent = msg.code; break;
+      case 'player_joined':
+        players[msg.id] = { name: msg.name, ships: [] }; renderPlayers(); break;
+      case 'player_left':
+        for (let i = allShips.length - 1; i >= 0; i--) if (allShips[i].playerId === msg.id) allShips.splice(i, 1);
+        delete players[msg.id]; renderPlayers(); renderRoster(); updateStartBtn(); break;
+      case 'ship_scanned':
+        const ship = { ...msg.ship, playerName: msg.playerName, playerId: msg.playerId };
+        allShips.push(ship);
+        if (players[msg.playerId]) players[msg.playerId].ships.push(ship);
+        renderRoster(); updateStartBtn(); break;
+      case 'ship_removed':
+        let count = 0;
+        for (let i = 0; i < allShips.length; i++) {
+          if (allShips[i].playerId === msg.playerId) { if (count === msg.index) { allShips.splice(i, 1); break; } count++; }
+        }
+        if (players[msg.playerId]) players[msg.playerId].ships.splice(msg.index, 1);
+        renderRoster(); updateStartBtn(); break;
+    }
+  };
+  ws.onerror = () => { statusDot.className = 'status-dot disconnected'; statusText.textContent = 'Connection error'; };
+  ws.onclose = () => { statusDot.className = 'status-dot disconnected'; statusText.textContent = 'Disconnected — refresh to reconnect'; };
+}
+
+function renderPlayers() {
+  playersBar.innerHTML = '';
+  for (const [id, p] of Object.entries(players)) {
+    const chip = document.createElement('div'); chip.className = 'player-chip';
+    chip.innerHTML = `<span class="player-dot"></span>${p.name}`;
+    playersBar.appendChild(chip);
+  }
+}
+
+function renderRoster() {
+  rosterGrid.innerHTML = ''; shipTotal.textContent = allShips.length;
+  waitingMsg.style.display = allShips.length === 0 ? 'flex' : 'none';
+  allShips.forEach(ship => {
+    const card = document.createElement('div'); card.className = 'roster-card';
+    card.style.setProperty('--ship-color', ship.c);
+    const canvas = document.createElement('canvas'); canvas.width = 80; canvas.height = 80;
+    drawShipPreview(canvas, ship.d, ship.c);
+    const name = document.createElement('div'); name.className = 'roster-card-name';
+    name.style.color = ship.c; name.textContent = PILOT_NAMES[ship.d] || 'UNKNOWN';
+    const weapon = document.createElement('div'); weapon.className = 'roster-card-weapon';
+    weapon.textContent = WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown';
+    const player = document.createElement('div'); player.className = 'roster-card-player';
+    player.textContent = ship.playerName || '?';
+    card.appendChild(canvas); card.appendChild(name); card.appendChild(weapon); card.appendChild(player);
+    rosterGrid.appendChild(card);
+  });
+}
+
+function updateStartBtn() {
+  const ready = allShips.length >= 2; startBtn.disabled = !ready;
+  const pc = Object.keys(players).length;
+  if (!ready) startHint.textContent = `Need at least 2 StarChips to start (${allShips.length}/2)`;
+  else if (teamCheck.checked && pc >= 2) startHint.textContent = `${allShips.length} StarChips, ${pc} teams — let's go!`;
+  else if (teamCheck.checked && pc < 2) startHint.textContent = `${allShips.length} StarChips ready — need 2+ players for teams`;
+  else startHint.textContent = `${allShips.length} StarChips ready — free-for-all!`;
+}
+
+startBtn.onclick = () => {
+  if (allShips.length < 2) return;
+  const useTeams = teamCheck.checked;
+  const lineup = allShips.map(s => ({
+    design: s.d, weapon: SHIP_WEAPONS[s.w], color: s.c,
+    passive: SHIP_PASSIVES[s.p], maneuver: SHIP_MANEUVERS[s.m],
+    temperament: s.t !== undefined ? s.t : s.d,
+    playerName: s.playerName
+  }));
+  localStorage.setItem('starchip_lineup', JSON.stringify({ ships: lineup, teams: useTeams }));
+  ws.send(JSON.stringify({ type: 'start_match' }));
+  window.location.href = 'bbr.html';
+};
+
+connect();
+
+// ─── STARFIELD ───
+const sf = document.getElementById('starfield');
+const H = Math.max(innerHeight, 1200);
+for(let i=0;i<200;i++){const s=document.createElement('div');s.className='star';const z=Math.random()<.9?.5+Math.random()*1.5:2+Math.random()*2,b=.1+Math.random()*.4,p=Math.min(b+.1+Math.random()*.4,1);s.style.cssText=`width:${z}px;height:${z}px;left:${Math.random()*100}%;top:${Math.random()*H}px;--base-o:${b};--peak-o:${p};opacity:${b};animation:twinkle ${3+Math.random()*6}s ease-in-out ${Math.random()*4}s infinite;${z>2?`box-shadow:0 0 ${z*2}px ${z*.5}px rgba(200,220,255,.15);`:''}`;sf.appendChild(s)}
+const ac=['#3a3a4a','#2a2a38','#4a4a58','#333345'];
+for(let i=0;i<14;i++){const a=document.createElement('div');a.className='asteroid';const sz=20+Math.random()*70;a.style.cssText=`width:${sz}px;height:${sz*(.5+Math.random()*.5)}px;left:${Math.random()*100}%;top:${Math.random()*H}px;--rot:${Math.random()*360}deg;--dx:${-20+Math.random()*40}px;--dy:${-10+Math.random()*20}px;background:${ac[Math.floor(Math.random()*ac.length)]};border-radius:${30+Math.random()*40}% ${30+Math.random()*40}% ${30+Math.random()*40}% ${30+Math.random()*40}%;animation:drift ${30+Math.random()*40}s ease-in-out ${Math.random()*10}s infinite alternate;`;sf.appendChild(a)}
+</script>
+</body>
+</html>

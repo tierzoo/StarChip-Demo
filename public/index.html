@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blast Belt Royale — StarChip Demo</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#04040a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #04040a; color: #d8dce6;
+    font-family: 'Rajdhani', -apple-system, sans-serif;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  .starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+  .asteroid { position: absolute; border-radius: 30% 70% 50% 50%; opacity: 0.06; transform: rotate(var(--rot)); }
+  @keyframes twinkle { 0%,100%{opacity:var(--base-o)} 50%{opacity:var(--peak-o)} }
+  @keyframes drift { 0%{transform:translate(0,0) rotate(var(--rot))} 100%{transform:translate(var(--dx),var(--dy)) rotate(calc(var(--rot)+20deg))} }
+
+  .page {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh; padding: 32px; text-align: center;
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 34px; font-weight: 900; letter-spacing: 4px; color: #fff;
+    text-shadow: 0 0 40px rgba(0,232,123,0.15);
+  }
+  .logo span { color: #00e87b; text-shadow: 0 0 30px rgba(0,232,123,0.3); }
+  .sub {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px; letter-spacing: 7px; color: #00e87b; opacity: 0.5; margin: 6px 0 52px;
+  }
+  .cards { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; }
+  a.card {
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(255,255,255,0.025); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 14px;
+    padding: 22px 24px; text-decoration: none; color: #d8dce6; transition: all 0.3s;
+  }
+  a.card:hover {
+    border-color: rgba(0,232,123,0.25); background: rgba(0,232,123,0.04);
+    transform: translateY(-3px); box-shadow: 0 8px 40px rgba(0,232,123,0.06);
+  }
+  .card-icon { font-size: 28px; flex-shrink: 0; width: 40px; text-align: center; }
+  .card-info { text-align: left; }
+  .card-title { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 2px; }
+  .card-desc { font-size: 13px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+  .footer {
+    margin-top: 56px; font-size: 10px; color: rgba(255,255,255,0.12);
+    letter-spacing: 4px; font-family: 'Orbitron', sans-serif;
+  }
+</style>
+</head>
+<body>
+<div class="starfield" id="starfield"></div>
+<div class="page">
+  <div class="logo">BLAST BELT <span>ROYALE</span></div>
+  <div class="sub">STARCHIP DEMO</div>
+  <div class="cards">
+    <a class="card" href="/arena.html">
+      <div class="card-icon">🖥️</div>
+      <div class="card-info">
+        <div class="card-title">HOST ARENA</div>
+        <div class="card-desc">Create a room and display on the big screen</div>
+      </div>
+    </a>
+    <a class="card" href="/player.html">
+      <div class="card-icon">📱</div>
+      <div class="card-info">
+        <div class="card-title">JOIN &amp; SCAN</div>
+        <div class="card-desc">Enter a room code and scan your StarChips</div>
+      </div>
+    </a>
+    <a class="card" href="/cards.html">
+      <div class="card-icon">🃏</div>
+      <div class="card-info">
+        <div class="card-title">GENERATE CARDS</div>
+        <div class="card-desc">Create and print QR code StarChips</div>
+      </div>
+    </a>
+  </div>
+  <div class="footer">QR DEMO — NFC VERSION COMING SOON</div>
+</div>
+<script>
+const sf=document.getElementById('starfield'),H=Math.max(innerHeight,document.body.scrollHeight);
+for(let i=0;i<180;i++){const s=document.createElement('div');s.className='star';const z=Math.random()<.9?.5+Math.random()*1.5:2+Math.random()*2,b=.1+Math.random()*.4,p=Math.min(b+.1+Math.random()*.4,1);s.style.cssText=`width:${z}px;height:${z}px;left:${Math.random()*100}%;top:${Math.random()*H}px;--base-o:${b};--peak-o:${p};opacity:${b};animation:twinkle ${3+Math.random()*6}s ease-in-out ${Math.random()*4}s infinite;${z>2?`box-shadow:0 0 ${z*2}px ${z*.5}px rgba(200,220,255,.15);`:''}`;sf.appendChild(s)}
+const ac=['#3a3a4a','#2a2a38','#4a4a58','#333345'];
+for(let i=0;i<12;i++){const a=document.createElement('div');a.className='asteroid';const sz=20+Math.random()*60;a.style.cssText=`width:${sz}px;height:${sz*(.5+Math.random()*.5)}px;left:${Math.random()*100}%;top:${Math.random()*H}px;--rot:${Math.random()*360}deg;--dx:${-20+Math.random()*40}px;--dy:${-10+Math.random()*20}px;background:${ac[Math.floor(Math.random()*ac.length)]};border-radius:${30+Math.random()*40}% ${30+Math.random()*40}% ${30+Math.random()*40}% ${30+Math.random()*40}%;animation:drift ${30+Math.random()*40}s ease-in-out ${Math.random()*10}s infinite alternate;`;sf.appendChild(a)}
+</script>
+</body>
+</html>
