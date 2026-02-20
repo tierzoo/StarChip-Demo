@@ -639,9 +639,12 @@ joinBtn.onclick = () => {
         showScreen(scanScreen); startCamera(); renderSavedFleet(); break;
       case 'error':
         errorMsg.textContent = msg.message; joinBtn.disabled = false; break;
-      case 'scan_confirmed':
-        scanStatus.textContent = 'StarChip registered!'; scanStatus.className = 'scan-status success';
+      case 'scan_confirmed': {
+        const _s = msg.ship || (myShips.length ? myShips[myShips.length - 1] : null);
+        const _sName = _s ? generateShipName(_s.d, colorIdx(_s.c), SHIP_WEAPONS[_s.w], SHIP_PASSIVES[_s.p], SHIP_MANEUVERS[_s.m], _s.t) : 'StarChip';
+        scanStatus.textContent = _sName + ' registered!'; scanStatus.className = 'scan-status success';
         setTimeout(() => { scanStatus.textContent = 'Scan another StarChip'; scanStatus.className = 'scan-status'; }, 1500); break;
+      }
       case 'match_started': showScreen(matchScreen); break;
       case 'match_ended': myShips = []; renderShipList(); showScreen(scanScreen); renderSavedFleet(); break;
       case 'room_closed':
@@ -743,7 +746,7 @@ function parseQR(data) {
   const p = parseInt(parts[4]), m = parseInt(parts[5]);
   const t = parts.length >= 7 ? parseInt(parts[6]) : d; // temperament defaults to design
   if (isNaN(d)||isNaN(w)||isNaN(p)||isNaN(m)||isNaN(t)) return null;
-  if (d<0||d>15||w<0||w>15||p<0||p>15||m<0||m>15||t<0||t>15) return null;
+  if (d<0||d>15||w<0||w>=SHIP_WEAPONS.length||p<0||p>=SHIP_PASSIVES.length||m<0||m>=SHIP_MANEUVERS.length||t<0||t>15) return null;
   if (!/^[0-9a-fA-F]{6}$/.test(c)) return null;
   return { d, w, c: '#' + c, p, m, t };
 }
