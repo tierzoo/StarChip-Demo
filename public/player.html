@@ -238,13 +238,26 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="namegen.js"></script>
 <script>
 // ─── SHIP DATA ───
 const PILOT_NAMES = ['FIGHTER','LEAF','BOMBER','ARROW','HEART','JET','MONSTER','EDGE','GHOST','POINT','TWISTER','SURVIVOR','HAWK','FRIGATE','CRESCENT','ENFORCER'];
 const PILOT_COLORS = ['#ff4444','#44ff88','#4488ff','#ffaa22','#dd66bb','#44ffff','#88dd55','#ff6b4a','#aa44ff','#ffffff','#ffff44','#ff00ff','#55bbff','#ffcc00','#bbbbcc','#8844dd'];
 const COLOR_NAMES = ['RED','GREEN','BLUE','ORANGE','PINK','CYAN','LIME','CORAL','PURPLE','WHITE','YELLOW','MAGENTA','SKY','GOLD','SILVER','VIOLET'];
 function colorName(hex) { const i = PILOT_COLORS.indexOf(hex); return i >= 0 ? COLOR_NAMES[i] : ''; }
+
+// ═══════════════════════════════════════════════════════════════
+// STARCHIP PROCEDURAL NAME GENERATOR
+// Each of 6 traits × 16 values = 96 entries, each with 8 adj + 8 nouns
+// Seeded RNG ensures same card always gets same name
+// ═══════════════════════════════════════════════════════════════
+
+function colorIdx(hex) { return Math.max(0, PILOT_COLORS.indexOf(hex)); }
+
+
 const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive'];
+const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override'];
+const SHIP_MANEUVERS = ['rapidFire','reverse','mineField','smokescreen','doubleTeam','barrelRoll','repulsor','hyperSpeed','dumpDebris','reflectorShields','shockPulse','turretMode','spinOut','repulsor','panic','quickTurn'];
 const WEAPON_NAMES = {
   alternating:'Alternator', chaotic:'Chaotic Burst', grenade:'Grenade', flamethrower:'Flamethrower',
   gatling:'Gatling Gun', homing:'Homing Missiles', snake:'Snake Shot', shotgun:'Shotgun',
@@ -386,7 +399,7 @@ function renderSavedFleet() {
     canvas.width = 72; canvas.height = 72; canvas.className = 'ship-card-icon';
     drawShipPreview(canvas, ship.d, ship.c);
     const info = document.createElement('div'); info.className = 'ship-card-info';
-    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${colorName(ship.c)} ${PILOT_NAMES[ship.d]}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
+    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${generateShipName(ship.d, colorIdx(ship.c), SHIP_WEAPONS[ship.w], SHIP_PASSIVES[ship.p], SHIP_MANEUVERS[ship.m], ship.t)}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
     const addIcon = document.createElement('div'); addIcon.className = 'add-icon';
     addIcon.textContent = alreadyAdded ? '✓' : '+';
     card.onclick = () => {
@@ -460,7 +473,7 @@ function renderShipList() {
     canvas.width = 72; canvas.height = 72; canvas.className = 'ship-card-icon';
     drawShipPreview(canvas, ship.d, ship.c);
     const info = document.createElement('div'); info.className = 'ship-card-info';
-    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${colorName(ship.c)} ${PILOT_NAMES[ship.d]}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
+    info.innerHTML = `<div class="ship-card-name" style="color:${ship.c}">${generateShipName(ship.d, colorIdx(ship.c), SHIP_WEAPONS[ship.w], SHIP_PASSIVES[ship.p], SHIP_MANEUVERS[ship.m], ship.t)}</div><div class="ship-card-detail">${WEAPON_NAMES[SHIP_WEAPONS[ship.w]] || 'Unknown'}</div>`;
     const removeBtn = document.createElement('button'); removeBtn.className = 'ship-card-remove'; removeBtn.textContent = '✕';
     removeBtn.onclick = () => { myShips.splice(i, 1); renderShipList(); ws.send(JSON.stringify({ type: 'remove_ship', index: i })); renderSavedFleet(); };
     card.appendChild(canvas); card.appendChild(info); card.appendChild(removeBtn);
