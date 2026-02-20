@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#000">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -183,6 +183,7 @@
 </style>
 </head>
 <body>
+<div id="fadeOverlay" style="position:fixed;inset:0;background:#000;z-index:99999;pointer-events:none;transition:opacity 0.5s ease"></div>
 
 <div class="starfield" id="starfield"></div>
 
@@ -703,10 +704,21 @@ startBtn.onclick = () => {
   }));
   localStorage.setItem('starchip_lineup', JSON.stringify({ ships: lineup, teams: useTeams }));
   ws.send(JSON.stringify({ type: 'start_match' }));
-  window.location.href = 'bbr.html';
+  // Fade to black before navigation
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99999;opacity:0;transition:opacity 0.4s ease';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  setTimeout(() => { window.location.href = 'bbr.html'; }, 450);
 };
 
 connect();
+
+// Fade out entry overlay
+requestAnimationFrame(() => {
+  const fo = document.getElementById('fadeOverlay');
+  if (fo) { fo.style.opacity = '0'; setTimeout(() => fo.remove(), 600); }
+});
 
 // ─── STARFIELD ───
 const sf = document.getElementById('starfield');
