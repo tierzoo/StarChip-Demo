@@ -499,21 +499,24 @@ function colorName(hex) { const i = PILOT_COLORS.indexOf(hex); return i >= 0 ? C
 // Seeded RNG ensures same card always gets same name
 // ═══════════════════════════════════════════════════════════════
 
-const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive'];
-const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override'];
+const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive','triple','boomerang','doublehelix'];
+const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override','scrapRepair','bioHull','piercing','fierce','titanium','jamRounds','detonator','cryoCoolant','blindRounds'];
 const SHIP_MANEUVERS = ['rapidFire','reverse','mineField','smokescreen','doubleTeam','barrelRoll','repulsor','hyperSpeed','dumpDebris','reflectorShields','shockPulse','turretMode','spinOut','repulsor','panic','quickTurn'];
 
 const WEAPON_NAMES = {
   alternating:'Alternator', chaotic:'Chaotic Burst', grenade:'Grenade', flamethrower:'Flamethrower',
   gatling:'Gatling Gun', homing:'Homing Missiles', snake:'Snake Shot', shotgun:'Shotgun',
   scrap:'Scrap Cannon', basic:'Basic Blaster', lightning:'Lightning Bolt', sniper:'Sniper Beam',
-  cyclone:'Cyclone Shot', drone:'Drone Array', crossshot:'Cross-Shot', concussive:'Scatterburst'
+  cyclone:'Cyclone Shot', drone:'Drone Array', crossshot:'Cross-Shot', concussive:'Scatterburst',
+  triple:'Triple-Guns', boomerang:'Boomerang', doublehelix:'Double Helix'
 };
 const PASSIVE_NAMES = {
   nitro:'Nitro', bouncyShot:'Bouncy Shot', stealth:'Stealth', incendiary:'Incendiary',
   sparkDrive:'Spark Drive', shield:'Shield', absorber:'Absorber', drillbore:'Drillbore',
   obliterator:'Obliterator', hitInvuln:'Phase-Out', stunShock:'Stun Shock', scope:'Scope',
-  iceRounds:'Ice Rounds', flagship:'Flagship', gyro:'Gyro', override:'Override'
+  iceRounds:'Ice Rounds', flagship:'Flagship', gyro:'Gyro', override:'Override',
+  scrapRepair:'Scrap Armor', bioHull:'Bio-Hull', piercing:'Piercing', fierce:'Fierce',
+  titanium:'Titanium', jamRounds:'Jam Rounds', detonator:'Detonator', cryoCoolant:'Fast Cycling', blindRounds:'Blinding Rounds'
 };
 const MANEUVER_NAMES = {
   rapidFire:'Rapid Fire', reverse:'Reverse', mineField:'Mine Field', smokescreen:'Smokescreen',
@@ -676,14 +679,14 @@ function generateCards() {
     grid.appendChild(makeCard(d, w, p, m, ci, t));
   } else if (mode === 'full') {
     for (let i = 0; i < 16; i++) {
-      const c = rand(0,15), w = rand(0,15), p = rand(0,15), m = rand(0,15), t = rand(0,15);
+      const c = rand(0,15), w = rand(0,SHIP_WEAPONS.length-1), p = rand(0,SHIP_PASSIVES.length-1), m = rand(0,15), t = rand(0,15);
       grid.appendChild(makeCard(i, w, p, m, c, t));
     }
   } else {
     const count = parseInt(document.getElementById('countInput').value) || 16;
     for (let i = 0; i < count; i++) {
-      const d = rand(0,15), c = rand(0,15), w = rand(0,15);
-      const p = rand(0,15), m = rand(0,15), t = rand(0,15);
+      const d = rand(0,15), c = rand(0,15), w = rand(0,SHIP_WEAPONS.length-1);
+      const p = rand(0,SHIP_PASSIVES.length-1), m = rand(0,15), t = rand(0,15);
       grid.appendChild(makeCard(d, w, p, m, c, t));
     }
   }
