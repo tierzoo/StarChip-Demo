@@ -626,6 +626,28 @@
     border-color: #fff;
   }
 
+  #arena-btn {
+    margin-top: 10px;
+    flex-shrink: 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 10px 28px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.3s;
+    opacity: 0;
+    animation: rankSlide 0.4s ease forwards;
+  }
+  #arena-btn:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.7);
+  }
+
   #auto-restart-countdown {
     font-family: 'Orbitron', sans-serif;
     font-size: 12px;
@@ -1265,6 +1287,7 @@
   <div id="rankings"></div>
   <div id="auto-restart-countdown" style="display:none;"></div>
   <button id="restart-btn">NEW MATCH</button>
+  <button id="arena-btn" style="display:none;">BACK TO ARENA</button>
 </div>
 
 <script>
@@ -2888,6 +2911,7 @@ let countdown = false;
 const MAX_TEAMS = 6;
 const TEAM_COLORS = ['#ff5050','#5096ff','#50ff50','#ffcc00','#ff50ff','#50ffff'];
 let matchMode = 'ffa'; // 'ffa' or 'teams'
+let _starchipSavedLineup = null; // persists across rematches
 let teamAssignments = []; // array of arrays of ship indices
 let teamNames = [];
 let teamWeapons = []; // per-team weapon key selections (empty = use global)
@@ -4124,6 +4148,7 @@ function init() {
   }
 
   document.getElementById('winner-overlay').classList.remove('show');
+  document.getElementById('arena-btn').style.display = 'none';
   showScoreboard = false;
   document.getElementById('alive-num').textContent = settings.numShips;
   buildScoreboard();
@@ -9008,10 +9033,12 @@ function startMatch() {
   const _scLineup = localStorage.getItem('starchip_lineup');
   let _starchipConfigs = null;
   let _starchipTeams = false;
-  if (_scLineup) {
-    localStorage.removeItem('starchip_lineup');
+  // Check localStorage first, fall back to saved global (rematch)
+  const _scRaw = _scLineup || (_starchipSavedLineup ? JSON.stringify(_starchipSavedLineup) : null);
+  if (_scRaw) {
+    if (_scLineup) localStorage.removeItem('starchip_lineup');
     try {
-      const _scData = JSON.parse(_scLineup);
+      const _scData = JSON.parse(_scRaw);
       // Support both array (legacy) and object { ships, teams } format
       const _scShips = Array.isArray(_scData) ? _scData : _scData.ships;
       _starchipTeams = !Array.isArray(_scData) && _scData.teams;
@@ -9019,6 +9046,7 @@ function startMatch() {
         settings.numShips = _scShips.length;
         settings.uniqueShips = true; // force unique ship shapes
         _starchipConfigs = _scShips;
+        _starchipSavedLineup = _scData; // save for rematch
         // Set up team mode if requested
         if (_starchipTeams) {
           matchMode = 'teams';
@@ -9516,6 +9544,11 @@ function showWinner() {
   // Tournament mode: change button text and auto-advance
   if (tourneyActive) {
     restartBtn.textContent = 'NEXT MATCH';
+  } else if (_starchipSavedLineup) {
+    restartBtn.textContent = 'REMATCH';
+    const arenaBtn = document.getElementById('arena-btn');
+    arenaBtn.style.display = '';
+    arenaBtn.style.animationDelay = `${0.45 + totalRows * 0.08}s`;
   } else {
     restartBtn.textContent = 'NEW MATCH';
   }
@@ -9554,9 +9587,10 @@ document.querySelectorAll('#speed-selector button').forEach(btn => {
 });
 
 document.getElementById('restart-btn').addEventListener('click', () => {
-  // ═══ STARCHIP: Return to arena lobby if we came from there ═══
-  if (document.referrer && document.referrer.includes('arena.html')) {
-    window.location.href = 'arena.html';
+  // ═══ STARCHIP: Rematch with same lineup ═══
+  if (_starchipSavedLineup) {
+    clearAutoRestart();
+    startMatch();
     return;
   }
   if (tourneyActive) {
@@ -9566,6 +9600,11 @@ document.getElementById('restart-btn').addEventListener('click', () => {
   clearAutoRestart();
   applyChaosMode();
   init();
+});
+
+document.getElementById('arena-btn').addEventListener('click', () => {
+  _starchipSavedLineup = null;
+  window.location.href = 'arena.html';
 });
 
 // ─── CAMERA MODE TOGGLE ──────────────────────────────────────
