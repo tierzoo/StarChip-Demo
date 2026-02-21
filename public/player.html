@@ -155,6 +155,37 @@
   .ship-card-remove:hover { color: #ff4444; }
 
   /* ── MATCH SCREEN ── */
+  .ready-bar {
+    width: 100%; max-width: 340px; margin-top: 20px;
+    display: none; /* hidden until at least 1 ship scanned */
+  }
+  .ready-label {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.025); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+    padding: 14px 18px; cursor: pointer; transition: all 0.3s;
+    user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  .ready-label:active { transform: scale(0.98); }
+  .ready-label.checked {
+    background: rgba(0,232,123,0.08);
+    border-color: rgba(0,232,123,0.3);
+  }
+  .ready-checkbox {
+    width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.2); background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s; font-size: 14px; color: transparent;
+  }
+  .ready-label.checked .ready-checkbox {
+    border-color: #00e87b; background: rgba(0,232,123,0.15); color: #00e87b;
+  }
+  .ready-text {
+    font-family: 'Orbitron', sans-serif; font-size: 12px;
+    letter-spacing: 3px; color: rgba(255,255,255,0.4); transition: color 0.3s;
+  }
+  .ready-label.checked .ready-text { color: #00e87b; }
+
   .match-status {
     font-family: 'Orbitron', sans-serif;
     font-size: 18px; font-weight: 900; color: #00e87b; letter-spacing: 4px;
@@ -222,6 +253,13 @@
   <div class="scanned-list">
     <h3>YOUR FLEET (<span id="shipCount">0</span>)</h3>
     <div id="shipList"></div>
+  </div>
+
+  <div class="ready-bar" id="readyBar">
+    <label class="ready-label" id="readyLabel">
+      <div class="ready-checkbox" id="readyCheck">✓</div>
+      <span class="ready-text">READY UP</span>
+    </label>
   </div>
 
   <div class="saved-fleet" id="savedFleetSection" style="display:none">
@@ -635,6 +673,7 @@ joinBtn.onclick = () => {
     switch (msg.type) {
       case 'joined':
         myId = msg.id; roomBadge.textContent = msg.code;
+        myShips = []; renderShipList(); resetReady();
         playerNameDisplay.textContent = nameInput.value.trim() || 'Player';
         showScreen(scanScreen); startCamera(); renderSavedFleet(); break;
       case 'error':
@@ -645,15 +684,21 @@ joinBtn.onclick = () => {
         scanStatus.textContent = _sName + ' registered!'; scanStatus.className = 'scan-status success';
         setTimeout(() => { scanStatus.textContent = 'Scan another StarChip'; scanStatus.className = 'scan-status'; }, 1500); break;
       }
+      case 'ready_state':
+        isReady = msg.ready;
+        readyLabel.classList.toggle('checked', isReady);
+        break;
       case 'match_started': showScreen(matchScreen); break;
-      case 'match_ended': myShips = []; renderShipList(); showScreen(scanScreen); renderSavedFleet(); break;
+      case 'match_ended': myShips = []; renderShipList(); resetReady(); showScreen(scanScreen); renderSavedFleet(); break;
       case 'room_closed':
+        myShips = []; renderShipList(); resetReady();
         errorMsg.textContent = 'Arena disconnected'; showScreen(joinScreen); joinBtn.disabled = false; break;
     }
   };
   ws.onerror = () => { errorMsg.textContent = 'Connection failed'; joinBtn.disabled = false; };
   ws.onclose = () => {
     if (scanScreen.classList.contains('active') || matchScreen.classList.contains('active')) {
+      myShips = []; renderShipList(); resetReady();
       errorMsg.textContent = 'Disconnected from arena'; showScreen(joinScreen); joinBtn.disabled = false;
     }
   };
@@ -718,6 +763,34 @@ function renderSavedFleet() {
   });
 }
 
+// ─── READY UP ───
+const readyBar = document.getElementById('readyBar');
+const readyLabel = document.getElementById('readyLabel');
+let isReady = false;
+
+function updateReadyBar() {
+  readyBar.style.display = myShips.length > 0 ? '' : 'none';
+  if (myShips.length === 0 && isReady) {
+    isReady = false;
+    readyLabel.classList.remove('checked');
+  }
+}
+
+readyLabel.onclick = () => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (myShips.length === 0) return;
+  isReady = !isReady;
+  readyLabel.classList.toggle('checked', isReady);
+  ws.send(JSON.stringify({ type: 'ready_up', ready: isReady }));
+  if (navigator.vibrate) navigator.vibrate(isReady ? [30, 20, 30] : 30);
+};
+
+function resetReady() {
+  isReady = false;
+  readyLabel.classList.remove('checked');
+  updateReadyBar();
+}
+
 // ─── QR SCANNING ───
 function startCamera() {
   navigator.mediaDevices.getUserMedia({
@@ -779,6 +852,7 @@ function renderShipList() {
     card.appendChild(canvas); card.appendChild(info); card.appendChild(removeBtn);
     shipList.appendChild(card);
   });
+  updateReadyBar();
 }
 
 // ─── STARFIELD ───
