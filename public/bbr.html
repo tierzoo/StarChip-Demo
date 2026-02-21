@@ -490,6 +490,13 @@
     padding: 30px 0;
   }
 
+  #winner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
+  }
+
   @keyframes fadeOverlay {
     from { background: rgba(0,0,0,0); backdrop-filter: blur(0px); }
     to { background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
@@ -1285,12 +1292,14 @@
 </div>
 
 <div id="winner-overlay">
-  <h2>MATCH RESULTS</h2>
-  <div id="winner-name"></div>
-  <div id="rankings"></div>
-  <div id="auto-restart-countdown" style="display:none;"></div>
-  <button id="restart-btn">NEW MATCH</button>
-  <button id="arena-btn" style="display:none;">BACK TO ARENA</button>
+  <div id="winner-content">
+    <h2>MATCH RESULTS</h2>
+    <div id="winner-name"></div>
+    <div id="rankings"></div>
+    <div id="auto-restart-countdown" style="display:none;"></div>
+    <button id="restart-btn">NEW MATCH</button>
+    <button id="arena-btn" style="display:none;">BACK TO ARENA</button>
+  </div>
 </div>
 
 <script>
@@ -3023,7 +3032,7 @@ const settings = {
   maneuvers: false,
   shipHP: 3,
   numShips: 16,
-  autoRestart: false,
+  autoRestart: true,
   chaosMode: false,
   matchLogger: false,
   showWeaponTag: false,
@@ -3988,6 +3997,7 @@ function applyChaosMode() {
   document.querySelector('[data-setting="randomWeapons"]').classList.toggle('on', settings.randomWeapons);
   document.querySelector('[data-setting="passives"]').classList.toggle('on', settings.passives);
   document.querySelector('[data-setting="maneuvers"]').classList.toggle('on', settings.maneuvers);
+  document.querySelector('[data-setting="autoRestart"]').classList.toggle('on', settings.autoRestart);
 
   // Sync ship count buttons
   document.querySelectorAll('#ship-count-selector .hp-btn').forEach(b => {
@@ -9843,17 +9853,15 @@ function showWinner() {
     });
   }
 
-  // Scale rankings to fit screen — measure after layout
-  container.style.transform = '';
+  // Scale entire results to fit screen
+  const content = document.getElementById('winner-content');
+  content.style.transform = '';
   requestAnimationFrame(() => {
-    const ov = document.getElementById('winner-overlay');
-    const rankingsTop = container.offsetTop;
-    const rankingsH = container.scrollHeight;
-    const availH = window.innerHeight - rankingsTop - 80; // leave room for button + padding
-    if (rankingsH > availH && availH > 0) {
-      const scale = availH / rankingsH;
-      container.style.transform = `scale(${scale})`;
-      container.style.transformOrigin = 'top center';
+    const contentH = content.scrollHeight;
+    const availH = window.innerHeight - 40; // 20px padding top + bottom
+    if (contentH > availH && availH > 0) {
+      const scale = availH / contentH;
+      content.style.transform = `scale(${scale})`;
     }
   });
 
@@ -9877,7 +9885,7 @@ function showWinner() {
   // Auto-restart countdown
   clearAutoRestart();
   if (settings.autoRestart || tourneyActive) {
-    let remaining = (settings.matchLogger && !tourneyActive) ? 3 : 5;
+    let remaining = 10;
     const cdEl = document.getElementById('auto-restart-countdown');
     cdEl.style.display = 'block';
     cdEl.innerHTML = `NEXT MATCH IN <span class="countdown-num">${remaining}</span>`;
@@ -10034,6 +10042,12 @@ function gameLoop(time) {
 
 initStars();
 init();
+
+// Sync toggle states on load
+document.querySelectorAll('.setting-toggle[data-setting]').forEach(el => {
+  const key = el.dataset.setting;
+  if (settings[key] !== undefined) el.classList.toggle('on', settings[key]);
+});
 requestAnimationFrame(gameLoop);
 
 // Fade out entry overlay
