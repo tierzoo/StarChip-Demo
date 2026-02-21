@@ -80,7 +80,7 @@ wss.on('connection', (ws) => {
         }
         myId = 'p' + (nextPlayerId++);
         myRoom = room;
-        room.players[myId] = { ws, name: msg.name || 'Player', ships: [] };
+        room.players[myId] = { ws, name: msg.name || 'Player', ships: [], ready: false };
         ws.send(JSON.stringify({ type: 'joined', id: myId, code: msg.code.toUpperCase() }));
         if (room.arena) {
           room.arena.send(JSON.stringify({
@@ -96,13 +96,18 @@ wss.on('connection', (ws) => {
         const player = myRoom.players[myId];
         if (!player) return;
         player.ships.push(msg.ship);
+        player.ready = false; // un-ready when roster changes
         if (myRoom.arena) {
           myRoom.arena.send(JSON.stringify({
             type: 'ship_scanned', playerId: myId,
             playerName: player.name, ship: msg.ship
           }));
+          myRoom.arena.send(JSON.stringify({
+            type: 'player_ready', playerId: myId, ready: false
+          }));
         }
         ws.send(JSON.stringify({ type: 'scan_confirmed', ship: msg.ship }));
+        ws.send(JSON.stringify({ type: 'ready_state', ready: false }));
         console.log(`Ship scanned by ${myId}:`, msg.ship);
         break;
       }
@@ -114,12 +119,40 @@ wss.on('connection', (ws) => {
         const idx = msg.index;
         if (idx >= 0 && idx < pl.ships.length) {
           pl.ships.splice(idx, 1);
+          pl.ready = false; // un-ready when roster changes
           if (myRoom.arena) {
             myRoom.arena.send(JSON.stringify({
               type: 'ship_removed', playerId: myId, index: idx
             }));
+            myRoom.arena.send(JSON.stringify({
+              type: 'player_ready', playerId: myId, ready: false
+            }));
+          }
+          ws.send(JSON.stringify({ type: 'ready_state', ready: false }));
+        }
+        break;
+      }
+
+      case 'ready_up': {
+        if (!myRoom || !myId) return;
+        const rp = myRoom.players[myId];
+        if (!rp || rp.ships.length === 0) return; // need at least 1 ship
+        rp.ready = !!msg.ready;
+        // Tell this player their confirmed state
+        ws.send(JSON.stringify({ type: 'ready_state', ready: rp.ready }));
+        // Tell arena
+        if (myRoom.arena) {
+          myRoom.arena.send(JSON.stringify({
+            type: 'player_ready', playerId: myId, ready: rp.ready
+          }));
+          // Check if all players ready with enough ships
+          const allPlayers = Object.values(myRoom.players);
+          const totalShips = allPlayers.reduce((s, p) => s + p.ships.length, 0);
+          if (allPlayers.length >= 1 && totalShips >= 2 && allPlayers.every(p => p.ready && p.ships.length > 0)) {
+            myRoom.arena.send(JSON.stringify({ type: 'all_ready' }));
           }
         }
+        console.log(`${rp.name} (${myId}) ready: ${rp.ready}`);
         break;
       }
 
