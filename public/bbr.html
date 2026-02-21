@@ -4221,6 +4221,7 @@ function init() {
     const faceAng = Math.atan2(spawnCenter.y - sp.y, spawnCenter.x - sp.x);
     ships.push({
       id: si,          // unique per instance
+      _scIdx: i,       // original config index for StarChip override
       shipType: _designType, // ship design (may be overridden by team design pool)
       _designForced: _designType !== i, // true if design was overridden by team pool
       name: PILOT_NAMES[i],
@@ -9408,8 +9409,9 @@ function startMatch() {
     ship.passive = getPassive(ship.shipType, ship.team || 0);
     ship.maneuver = getManeuver(ship.shipType, ship.team || 0);
     // ═══ STARCHIP OVERRIDE ═══
-    if (_starchipConfigs && _starchipConfigs[i]) {
-      const _sc = _starchipConfigs[i];
+    const _scKey = ship._scIdx !== undefined ? ship._scIdx : i;
+    if (_starchipConfigs && _starchipConfigs[_scKey]) {
+      const _sc = _starchipConfigs[_scKey];
       ship.shipType = _sc.design;
       ship.color = _sc.color;
       ship.origColor = _sc.color;
