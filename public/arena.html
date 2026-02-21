@@ -121,7 +121,14 @@
     animation: slideIn 0.3s ease;
   }
   @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } }
-  .player-dot { width: 8px; height: 8px; border-radius: 50%; background: #00e87b; box-shadow: 0 0 8px #00e87b; }
+  .player-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); box-shadow: none; transition: all 0.3s; }
+  .player-chip.ready .player-dot { background: #00e87b; box-shadow: 0 0 8px #00e87b; }
+  .player-chip.ready { border-color: rgba(0,232,123,0.25); }
+  .player-ready-tag {
+    font-family: 'Orbitron', sans-serif; font-size: 8px; letter-spacing: 2px;
+    color: #00e87b; margin-left: 4px; opacity: 0; transition: opacity 0.3s;
+  }
+  .player-chip.ready .player-ready-tag { opacity: 1; }
 
   /* ── WAITING ── */
   .waiting {
@@ -633,7 +640,7 @@ function connect() {
     switch (msg.type) {
       case 'room_created': roomCode.textContent = msg.code; break;
       case 'player_joined':
-        players[msg.id] = { name: msg.name, ships: [] }; renderPlayers(); break;
+        players[msg.id] = { name: msg.name, ships: [], ready: false }; renderPlayers(); break;
       case 'player_left':
         for (let i = allShips.length - 1; i >= 0; i--) if (allShips[i].playerId === msg.id) allShips.splice(i, 1);
         delete players[msg.id]; renderPlayers(); renderRoster(); updateStartBtn(); break;
@@ -649,6 +656,16 @@ function connect() {
         }
         if (players[msg.playerId]) players[msg.playerId].ships.splice(msg.index, 1);
         renderRoster(); updateStartBtn(); break;
+      case 'player_ready':
+        if (players[msg.playerId]) {
+          players[msg.playerId].ready = msg.ready;
+          renderPlayers(); updateStartBtn();
+        }
+        break;
+      case 'all_ready':
+        // Auto-start if button is enabled
+        if (!startBtn.disabled) startBtn.click();
+        break;
     }
   };
   ws.onerror = () => { statusDot.className = 'status-dot disconnected'; statusText.textContent = 'Connection error'; };
@@ -658,8 +675,8 @@ function connect() {
 function renderPlayers() {
   playersBar.innerHTML = '';
   for (const [id, p] of Object.entries(players)) {
-    const chip = document.createElement('div'); chip.className = 'player-chip';
-    chip.innerHTML = `<span class="player-dot"></span>${p.name}`;
+    const chip = document.createElement('div'); chip.className = 'player-chip' + (p.ready ? ' ready' : '');
+    chip.innerHTML = `<span class="player-dot"></span>${p.name}<span class="player-ready-tag">READY</span>`;
     playersBar.appendChild(chip);
   }
 }
@@ -686,10 +703,12 @@ function renderRoster() {
 function updateStartBtn() {
   const ready = allShips.length >= 2; startBtn.disabled = !ready;
   const pc = Object.keys(players).length;
+  const readyCount = Object.values(players).filter(p => p.ready).length;
+  const readyTag = pc > 0 ? ` (${readyCount}/${pc} ready)` : '';
   if (!ready) startHint.textContent = `Need at least 2 StarChips to start (${allShips.length}/2)`;
-  else if (teamCheck.checked && pc >= 2) startHint.textContent = `${allShips.length} StarChips, ${pc} teams — let's go!`;
+  else if (teamCheck.checked && pc >= 2) startHint.textContent = `${allShips.length} StarChips, ${pc} teams${readyTag}`;
   else if (teamCheck.checked && pc < 2) startHint.textContent = `${allShips.length} StarChips ready — need 2+ players for teams`;
-  else startHint.textContent = `${allShips.length} StarChips ready — free-for-all!`;
+  else startHint.textContent = `${allShips.length} StarChips ready${readyTag}`;
 }
 
 startBtn.onclick = () => {
