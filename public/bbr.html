@@ -4203,14 +4203,14 @@ function init() {
   const _posTeamLookup = [];
   if (matchMode === 'teams') {
     for (let t = 0; t < teamAssignments.length; t++) {
-      for (const idx of teamAssignments[t]) _posTeamLookup.push(t + 1);
+      for (const idx of teamAssignments[t]) _posTeamLookup[idx] = t + 1;
     }
   }
 
   for (let si = 0; si < activeShips.length; si++) {
     const i = activeShips[si];
     const sp = spawnPositions[si];
-    const _teamNum = _posTeamLookup[si] || 0;
+    const _teamNum = _posTeamLookup[i] || 0;
     // Ship design override: if team has designs selected, use one from pool
     let _designType = i;
     if (_teamNum > 0 && teamShipDesigns[_teamNum - 1] && teamShipDesigns[_teamNum - 1].length > 0) {
