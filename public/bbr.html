@@ -5322,6 +5322,7 @@ function update(rawDt) {
           for (let di = 0; di < w.droneCount; di++) {
             shipDrones.push({
               ownerId: ship.id,
+              ownerTeam: ship.team || 0,
               color: ship.color,
               x: ship.x, y: ship.y,
               vx: 0, vy: 0,
@@ -6592,6 +6593,7 @@ function update(rawDt) {
       // Collision damage while orbiting (contact damage)
       for (const s of ships) {
         if (!s.alive || s.id === d.ownerId) continue;
+        if (d.ownerTeam > 0 && s.team === d.ownerTeam) continue;
         if (dist(d, s) < d.r + s.r) {
           // Deal damage
           s.hp -= d.damage;
@@ -6629,6 +6631,7 @@ function update(rawDt) {
       let closest = null, cDist = Infinity;
       for (const s of ships) {
         if (!s.alive || s.id === d.ownerId) continue;
+        if (d.ownerTeam > 0 && s.team === d.ownerTeam) continue;
         const dd = dist(d, s);
         if (dd < cDist) { cDist = dd; closest = s; }
       }
