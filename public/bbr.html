@@ -6108,7 +6108,7 @@ function update(rawDt) {
         // Drillbore passive: smash through asteroids unharmed
         if (ship.passive === 'drillbore') {
           // Drillbore: smash through but take 10% chip damage
-          const chipDmg = 0.4;
+          const chipDmg = 0.2;
           ship.hp -= chipDmg;
           ship.hpBarTimer = 0.75;
           spawnExplosion(ast.x, ast.y, ship.color, 12, 80);
