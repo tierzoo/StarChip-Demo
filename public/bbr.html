@@ -5575,6 +5575,10 @@ function update(rawDt) {
     const _preTrailCount = particles.length;
     if (b.type === 'flamethrower') {
       // Flamethrower: dense flickering flame particles
+      // Skip if bullet has a debuff passive — debuff aura trail replaces these
+      const _flameDebuffs = ['iceRounds', 'jamRounds', 'stunShock', 'override', 'blindRounds'];
+      const _flameHasDebuff = _flameDebuffs.includes(b.ownerPassive);
+      if (!_flameHasDebuff) {
       const age = gameTime - b.spawnTime;
       const nearShip = age < 0.2;
       const spawnCount = nearShip ? 1 : 3;
@@ -5594,6 +5598,7 @@ function update(rawDt) {
             size: rand(1.5, 4) * fade,
           });
         }
+      }
       }
     } else if (b.sineAmp && b.type !== 'doublehelix') {
       // Snake bullets: dense, long-lasting glowing trail
@@ -5788,7 +5793,10 @@ function update(rawDt) {
       // Faster bullets spawn trails more reliably (lightning at 1600 u/s needs help)
       let spawnChance = Math.min(0.95, 0.5 + bSpd / 3000);
       if (b.ownerPassive === 'stunShock') spawnChance *= 0.5; // half density for stun
+      const _isFlame = b.type === 'flamethrower';
+      const _debuffLoops = _isFlame ? 2 : 1; // denser for flamethrower (replaces normal trail)
       if (bSpd > 10 && Math.random() < spawnChance) {
+       for (let _dl = 0; _dl < _debuffLoops; _dl++) {
         const perpAng = Math.atan2(b.vy, b.vx) + Math.PI * 0.5;
         const side = Math.random() < 0.5 ? 1 : -1;
         if (b.ownerPassive === 'stunShock') {
@@ -5812,6 +5820,8 @@ function update(rawDt) {
           });
         } else if (b.ownerPassive === 'iceRounds') {
           // Ice crystals: diamonds and snowflakes
+          // Dragonfire + ice is very particle-heavy — cut 60%
+          if (_isFlame && Math.random() < 0.6) continue;
           const spread = rand(6, 16);
           const px = b.x + Math.cos(perpAng) * spread * side;
           const py = b.y + Math.sin(perpAng) * spread * side;
@@ -5840,6 +5850,7 @@ function update(rawDt) {
             size: rand(1, 2.5),
           });
         }
+       } // end _debuffLoops
       }
     }
     } // end finale trail slowdown
