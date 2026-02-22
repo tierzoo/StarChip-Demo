@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="background:#000">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -12,10 +12,8 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -67,6 +65,7 @@
   }
 
   #alive-counter {
+    display: none;
     position: fixed;
     bottom: 12px;
     right: 16px;
@@ -90,6 +89,7 @@
   }
 
   #camera-mode {
+    display: none;
     position: fixed;
     bottom: 12px;
     left: 16px;
@@ -490,13 +490,6 @@
     padding: 30px 0;
   }
 
-  #winner-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform-origin: center center;
-  }
-
   @keyframes fadeOverlay {
     from { background: rgba(0,0,0,0); backdrop-filter: blur(0px); }
     to { background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
@@ -634,27 +627,14 @@
     background: rgba(255,255,255,0.1);
     border-color: #fff;
   }
-
-  #arena-btn {
-    margin-top: 10px;
-    flex-shrink: 0;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    letter-spacing: 3px;
-    padding: 10px 28px;
+  #restart-btn.auto-hidden {
+    opacity: 0 !important;
+    border-color: transparent;
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.4);
-    cursor: pointer;
-    pointer-events: all;
-    transition: all 0.3s;
-    opacity: 0;
-    animation: rankSlide 0.4s ease forwards;
   }
-  #arena-btn:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.3);
-    color: rgba(255,255,255,0.7);
+  #restart-btn.auto-hidden:hover {
+    opacity: 0 !important;
+    background: transparent;
   }
 
   #auto-restart-countdown {
@@ -687,6 +667,16 @@
     cursor: pointer;
     pointer-events: all;
     transition: all 0.2s;
+  }
+
+  #settings-btn.match-hidden {
+    opacity: 0;
+    background: transparent;
+    border-color: transparent;
+  }
+  #settings-btn.match-hidden:hover {
+    opacity: 0;
+    background: transparent;
   }
 
   #settings-btn:hover {
@@ -896,6 +886,15 @@
     opacity: 0;
     transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease;
   }
+  #bracket-flash {
+    position: fixed; inset: 0; z-index: 99999;
+    background: #000; opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  #bracket-flash.active {
+    opacity: 1;
+  }
   .bracket-round {
     display: flex; flex-direction: column;
     gap: 0; flex-shrink: 0;
@@ -1091,19 +1090,26 @@
   #tourney-progress-banner {
     position: fixed; top: 0; left: 0; right: 0;
     z-index: 102; display: none;
-    text-align: center; padding: 8px 16px;
-    background: rgba(0,0,0,0.8);
+    text-align: center; padding: 10px 16px 12px;
+    background: rgba(0,0,0,0.85);
     border-bottom: 1px solid rgba(255,255,255,0.15);
     font-family: 'Orbitron', sans-serif;
-    font-size: 11px; font-weight: 700;
+    font-size: 22px; font-weight: 700;
     letter-spacing: 4px; color: rgba(255,255,255,0.5);
     pointer-events: none;
   }
   #tourney-progress-banner.active { display: block; }
+  .banner-round { font-size: 13px; letter-spacing: 5px; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+  .banner-teams { display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .banner-team { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .banner-team-name { font-size: 22px; font-weight: 900; letter-spacing: 4px; }
+  .banner-team-ships { display: flex; gap: 3px; align-items: center; justify-content: center; }
+  .banner-team-ships .ship-icon { transition: opacity 0.4s ease; }
+  .banner-team-ships .ship-icon.eliminated { opacity: 0.2; }
+  .banner-vs { font-size: 16px; font-weight: 900; letter-spacing: 3px; color: rgba(255,255,255,0.3); padding: 0 8px; }
 </style>
 </head>
 <body>
-<div id="fadeOverlay" style="position:fixed;inset:0;background:#000;z-index:99999;pointer-events:none;transition:opacity 0.5s ease"></div>
 
 <canvas id="game"></canvas>
 
@@ -1252,6 +1258,7 @@
     </div>
     <div id="tourney-status"></div>
     <button id="tourney-start-btn" disabled onclick="startTournament()">BEGIN</button>
+    <button id="tourney-random-btn" onclick="randomFillTournament()" style="background:#335; color:#8cf; border:1px solid #8cf44; font-family:Orbitron,sans-serif; font-size:11px; padding:8px 12px; cursor:pointer; letter-spacing:2px;">RANDOM FILL</button>
     <div style="flex:1;"></div>
     <button id="tourney-back-btn" onclick="exitTournament()">← BACK</button>
   </div>
@@ -1261,6 +1268,8 @@
     <div id="bracket-container"></div>
   </div>
 </div>
+
+<div id="bracket-flash"></div>
 
 <!-- Tournament team builder modal -->
 <div id="tourney-team-modal">
@@ -1292,314 +1301,14 @@
 </div>
 
 <div id="winner-overlay">
-  <div id="winner-content">
-    <h2>MATCH RESULTS</h2>
-    <div id="winner-name"></div>
-    <div id="rankings"></div>
-    <div id="auto-restart-countdown" style="display:none;"></div>
-    <button id="restart-btn">NEW MATCH</button>
-    <button id="arena-btn" style="display:none;">BACK TO ARENA</button>
-  </div>
+  <h2>MATCH RESULTS</h2>
+  <div id="winner-name"></div>
+  <div id="rankings"></div>
+  <div id="auto-restart-countdown" style="display:none;"></div>
+  <button id="restart-btn">NEW MATCH</button>
 </div>
 
 <script>
-// ── NAMEGEN (inlined) ──
-// ═══════════════════════════════════════════════════════════════
-// STARCHIP PROCEDURAL NAME GENERATOR
-// Edit the word pools below to customize ship names!
-//
-// Shapes & Colors & Temperaments: indexed 0–15
-// Weapons, Passives, Maneuvers: keyed by string (e.g. 'shotgun')
-//
-// The generator picks 1 adjective from one trait's pool
-// + 1 noun from a different trait's pool.
-// Same card stats always produce the same name (seeded RNG).
-// ═══════════════════════════════════════════════════════════════
-
-const SHIP_NAME_BANK = {
-
-  // ─── SHAPES (design index 0–15) ───────────────────────────
-  shape: [
-    // 0: FIGHTER
-    { adj: ['Battle','Valiant','Militant','Warborn','Armed','Combat','Defiant','Iron'],
-      noun: ['Warrior','Centurion','Gladiator','Champion','Vanguard','Sentinel','Warden','Soldier'] },
-    // 1: LEAF
-    { adj: ['Verdant','Organic','Living','Budding','Wild','Natural','Rooted','Floral'],
-      noun: ['Sapling','Thorn','Petal','Blossom','Sprout','Bramble','Fern','Ivy'] },
-    // 2: BOMBER
-    { adj: ['Heavy','Explosive','Rumbling','Massive','Hulking','Loaded','Booming','Dense'],
-      noun: ['Payload','Ordnance','Demolisher','Crater','Bombard','Warhead','Siege','Arsenal'] },
-    // 3: ARROW
-    { adj: ['Swift','Piercing','Sleek','Keen','Streaking','Darting','Fleet','Sharp'],
-      noun: ['Bolt','Javelin','Quarrel','Spear','Dart','Lance','Needle','Shaft'] },
-    // 4: HEART
-    { adj: ['Blazing','Burning','Pulsing','Vital','Fierce','Passionate','Driven','Brave'],
-      noun: ['Ember','Core','Flame','Spark','Pulse','Beacon','Forge','Crucible'] },
-    // 5: JET
-    { adj: ['Sonic','Roaring','Supersonic','Screaming','Afterburn','Turbo','Express','Mach'],
-      noun: ['Comet','Streak','Contrail','Burner','Throttle','Afterglow','Turbine','Thruster'] },
-    // 6: MONSTER
-    { adj: ['Fearsome','Monstrous','Savage','Feral','Ravenous','Primal','Bestial','Dread'],
-      noun: ['Behemoth','Leviathan','Titan','Hydra','Chimera','Kraken','Goliath','Wyrm'] },
-    // 7: EDGE
-    { adj: ['Angular','Serrated','Jagged','Bladed','Honed','Cutting','Edged','Whetted'],
-      noun: ['Shard','Blade','Razor','Cleaver','Scalpel','Wedge','Splinter','Barb'] },
-    // 8: GHOST
-    { adj: ['Spectral','Phantom','Hollow','Haunted','Ethereal','Fading','Silent','Unseen'],
-      noun: ['Wraith','Specter','Phantom','Shade','Apparition','Revenant','Banshee','Wisp'] },
-    // 9: POINT
-    { adj: ['Precise','Focused','Pinpoint','Acute','Narrow','Exact','Fine','Tipped'],
-      noun: ['Spire','Apex','Vertex','Needle','Spike','Pinnacle','Stiletto','Prong'] },
-    // 10: TWISTER
-    { adj: ['Spinning','Spiraling','Whirling','Cyclonic','Rotating','Twisted','Gyrating','Coiling'],
-      noun: ['Vortex','Tornado','Maelstrom','Spiral','Cyclone','Tempest','Whirlwind','Funnel'] },
-    // 11: SURVIVOR
-    { adj: ['Enduring','Resilient','Hardened','Scarred','Tested','Unbroken','Gritty','Tenacious'],
-      noun: ['Remnant','Holdout','Bastion','Bulwark','Anchor','Pillar','Relic','Veteran'] },
-    // 12: HAWK
-    { adj: ['Predatory','Soaring','Keen-Eyed','Swooping','Raptor','Hunting','Taloned','Circling'],
-      noun: ['Falcon','Raptor','Talon','Eagle','Osprey','Harrier','Kestrel','Merlin'] },
-    // 13: FRIGATE
-    { adj: ['Imposing','Naval','Broadside','Armored','Seafaring','Flagship','Decked','Gallant'],
-      noun: ['Frigate','Dreadnought','Corvette','Galleon','Cruiser','Destroyer','Brigantine','Armada'] },
-    // 14: CRESCENT
-    { adj: ['Lunar','Curved','Waning','Arcing','Crescent','Horned','Bowed','Sweeping'],
-      noun: ['Eclipse','Moonrise','Crescent','Scythe','Sickle','Arc','Halo','Corona'] },
-    // 15: ENFORCER
-    { adj: ['Ruthless','Unyielding','Stern','Ironclad','Formidable','Commanding','Absolute','Rigid'],
-      noun: ['Marshal','Enforcer','Arbiter','Warden','Judge','Inquisitor','Constable','Regent'] },
-  ],
-
-  // ─── COLORS (color index 0–15) ────────────────────────────
-  color: [
-    // 0: RED
-    { adj: ['Crimson','Scarlet','Bloodied','Ruby','Infernal','Smoldering','Molten','Searing'],
-      noun: ['Inferno','Blaze','Furnace','Magma','Cinder','Volcano','Pyre','Flare'] },
-    // 1: GREEN
-    { adj: ['Emerald','Verdant','Mossy','Jade','Lush','Overgrown','Toxic','Jungle'],
-      noun: ['Canopy','Thicket','Grove','Moss','Jungle','Glade','Marsh','Vine'] },
-    // 2: BLUE
-    { adj: ['Cobalt','Azure','Glacial','Deep','Oceanic','Frozen','Cerulean','Sapphire'],
-      noun: ['Abyss','Glacier','Depths','Tide','Frost','Riptide','Iceberg','Current'] },
-    // 3: ORANGE
-    { adj: ['Amber','Smoldering','Russet','Copper','Autumn','Harvest','Scorched','Tawny'],
-      noun: ['Sunset','Bonfire','Hearth','Lantern','Campfire','Ember','Kiln','Dusk'] },
-    // 4: PINK
-    { adj: ['Rosy','Blushing','Coral','Flushed','Dawn','Pastel','Vibrant','Neon'],
-      noun: ['Aurora','Bloom','Blush','Petal','Dawn','Rosette','Orchid','Dahlia'] },
-    // 5: CYAN
-    { adj: ['Electric','Frigid','Aqua','Neon','Shimmering','Teal','Luminous','Glinting'],
-      noun: ['Circuit','Current','Plasma','Signal','Conduit','Filament','Prism','Relay'] },
-    // 6: LIME
-    { adj: ['Acid','Caustic','Toxic','Venomous','Corrosive','Volatile','Reactive','Bitter'],
-      noun: ['Catalyst','Toxin','Reagent','Venom','Acid','Enzyme','Solvent','Compound'] },
-    // 7: CORAL
-    { adj: ['Warm','Tropical','Sunlit','Coastal','Radiant','Glowing','Burnished','Balmy'],
-      noun: ['Lagoon','Reef','Atoll','Shoal','Tideway','Grotto','Cove','Sandbar'] },
-    // 8: PURPLE
-    { adj: ['Royal','Mystic','Regal','Arcane','Imperial','Sovereign','Ancient','Noble'],
-      noun: ['Throne','Crown','Scepter','Monarch','Dynasty','Dominion','Empire','Sanctum'] },
-    // 9: WHITE
-    { adj: ['Pale','Blinding','Pristine','Stark','Pure','Radiant','Bleached','Ivory'],
-      noun: ['Haze','Zenith','Void','Blank','Frost','Glare','Bone','Chalk'] },
-    // 10: YELLOW
-    { adj: ['Solar','Blazing','Golden','Sizzling','Brilliant','Luminous','Flashing','Dazzling'],
-      noun: ['Sunburst','Lightning','Flash','Flicker','Spark','Ray','Beam','Photon'] },
-    // 11: MAGENTA
-    { adj: ['Vivid','Exotic','Intense','Fluorescent','Lurid','Fierce','Pulsing','Ultraviolet'],
-      noun: ['Prism','Anomaly','Mirage','Illusion','Paradox','Enigma','Glitch','Rift'] },
-    // 12: SKY
-    { adj: ['Soaring','Aerial','Boundless','Cloudborn','Windswept','Drifting','Open','High'],
-      noun: ['Horizon','Stratosphere','Gust','Zephyr','Altitude','Updraft','Breeze','Summit'] },
-    // 13: GOLD
-    { adj: ['Gilded','Precious','Lustrous','Opulent','Gleaming','Resplendent','Ornate','Regal'],
-      noun: ['Treasure','Bullion','Ingot','Doubloon','Sovereign','Fortune','Hoard','Tribute'] },
-    // 14: SILVER
-    { adj: ['Chrome','Quicksilver','Polished','Mercurial','Tempered','Sterling','Bright','Mirrored'],
-      noun: ['Mercury','Mirror','Alloy','Nickel','Steel','Tinsel','Plate','Edge'] },
-    // 15: VIOLET
-    { adj: ['Twilight','Shadowed','Dusky','Deep','Crepuscular','Amethyst','Midnight','Nebular'],
-      noun: ['Nebula','Dusk','Twilight','Shadow','Nightfall','Eventide','Umbra','Gloaming'] },
-  ],
-
-  // ─── WEAPONS (19 — keyed by WEAPON_DEFS key) ─────────────
-  weapon: {
-    basic:        { adj: ['Steady','Reliable','Standard','Proven','Trusted','Classic','Veteran','Stock'],          noun: ['Standard','Sidearm','Workhorse','Staple','Mainline','Baseline','Foundation','Bedrock'] },
-    shotgun:      { adj: ['Buckshot','Scattergun','Close-Range','Boomstick','Wide','Pelting','Thundering','Blasting'], noun: ['Scatter','Buckshot','Slug','Shredder','Boomstick','Pelter','Ripper','Buster'] },
-    grenade:      { adj: ['Explosive','Detonating','Fragmenting','Shrapnel','Bursting','Incendiary','Volatile','Cluster'], noun: ['Grenade','Mortar','Shell','Mine','Bomblet','Fragment','Canister','Shrapnel'] },
-    triple:       { adj: ['Triple','Three-Barreled','Tri-Fire','Spreading','Fanning','Multi-Shot','Widening','Broad'], noun: ['Trident','Trifecta','Trilogy','Triplet','Trio','Triumvirate','Triangle','Treble'] },
-    homing:       { adj: ['Tracking','Seeking','Locked','Guided','Pursuing','Homing','Stalking','Targeting'],     noun: ['Missile','Seeker','Hunter','Interceptor','Tracker','Predator','Stalker','Pursuer'] },
-    alternating:  { adj: ['Twin','Dual','Paired','Double','Mirrored','Parallel','Coupled','Tandem'],              noun: ['Barrage','Volley','Salvo','Broadside','Cascade','Battery','Fusillade','Crossfire'] },
-    flamethrower: { adj: ['Scorching','Blazing','Hellfire','Searing','Charring','Napalm','Blistering','White-Hot'], noun: ['Dragon','Inferno','Hellfire','Firestorm','Immolation','Blaze','Conflagration','Furnace'] },
-    sniper:       { adj: ['Distant','Marksman','Telescopic','Long-Range','Silent','Patient','Lethal','Clinical'],  noun: ['Marksman','Sharpshooter','Longshot','Deadeye','Crosshair','Scope','Bullseye','Caliber'] },
-    chaotic:      { adj: ['Chaotic','Erratic','Unhinged','Frenzied','Random','Scrambled','Turbulent','Glitched'], noun: ['Havoc','Chaos','Mayhem','Frenzy','Scramble','Disorder','Pandemonium','Entropy'] },
-    scrap:        { adj: ['Jagged','Junked','Cobbled','Makeshift','Salvaged','Patchwork','Rusty','Improvised'],    noun: ['Junkyard','Scrapheap','Wreckage','Salvage','Debris','Shrapnel','Rubble','Refuse'] },
-    snake:        { adj: ['Serpentine','Slithering','Winding','Coiling','Viper','Fanged','Venomous','Sinuous'],    noun: ['Serpent','Viper','Cobra','Sidewinder','Mamba','Asp','Fang','Python'] },
-    gatling:      { adj: ['Relentless','Drumming','Unceasing','Hammering','Grinding','Rattling','Chattering','Pelting'], noun: ['Gatling','Minigun','Chaingun','Turret','Hailstorm','Buzzsaw','Jackhammer','Grinder'] },
-    boomerang:    { adj: ['Returning','Curved','Arcing','Looping','Sweeping','Orbiting','Recurving','Hooking'],    noun: ['Boomerang','Arc','Hook','Return','Orbit','Curveball','Sling','Ricochet'] },
-    doublehelix:  { adj: ['Helical','Twisting','Intertwined','Spiraling','Braided','Weaving','Entwined','Woven'], noun: ['Helix','Strand','Spiral','Braid','Weave','Double','Corkscrew','Twist'] },
-    cyclone:      { adj: ['Whirling','Storming','Gusting','Howling','Raging','Swirling','Blustering','Churning'], noun: ['Gale','Typhoon','Hurricane','Squall','Monsoon','Twister','Dustdevil','Sirocco'] },
-    crossshot:    { adj: ['Converging','Crossing','Flanking','Pincer','Intersecting','Angled','Bracketing','Opposing'], noun: ['Crossfire','Pincer','Scissors','Intersect','Junction','Nexus','Vertex','Crux'] },
-    lightning:    { adj: ['Voltaic','Crackling','Thunderous','Arcing','Surging','Galvanic','Shocking','Charged'],  noun: ['Thunder','Bolt','Shock','Surge','Arc','Jolt','Discharge','Capacitor'] },
-    concussive:   { adj: ['Concussive','Shattering','Rupturing','Fracturing','Splintering','Cracking','Quaking','Rending'], noun: ['Shockwave','Impact','Tremor','Rupture','Fracture','Quake','Breaker','Rift'] },
-    drone:        { adj: ['Swarming','Autonomous','Networked','Buzzing','Droning','Orbiting','Hovering','Linked'], noun: ['Swarm','Hive','Fleet','Cluster','Brood','Colony','Network','Array'] },
-  },
-
-  // ─── PASSIVES (25 — keyed by PASSIVE_DEFS key) ───────────
-  passive: {
-    scrapRepair:  { adj: ['Patched','Welded','Riveted','Hammered','Bolted','Mended','Scavenged','Reinforced'],    noun: ['Patchwork','Scrapyard','Weld','Rivet','Salvage','Repair','Tinker','Anvil'] },
-    bioHull:      { adj: ['Regenerating','Organic','Symbiotic','Adaptive','Growing','Mutating','Healing','Evolving'], noun: ['Organism','Symbiont','Parasite','Colony','Growth','Mutation','Membrane','Cocoon'] },
-    nitro:        { adj: ['Boosted','Supercharged','Nitrous','Turbocharged','Afterburning','Redlining','Injected','Ramjet'], noun: ['Rocket','Booster','Dragster','Nitro','Overdrive','Accelerant','Propellant','Thrust'] },
-    gyro:         { adj: ['Stabilized','Balanced','Centered','Calibrated','Steady','Level','Tuned','Aligned'],     noun: ['Gyroscope','Compass','Pendulum','Balance','Fulcrum','Axis','Stabilizer','Equilibrium'] },
-    shield:       { adj: ['Shielded','Fortified','Armored','Protected','Guarded','Warded','Plated','Reinforced'],  noun: ['Shield','Barrier','Rampart','Aegis','Buckler','Phalanx','Fortress','Citadel'] },
-    piercing:     { adj: ['Piercing','Penetrating','Perforating','Punching','Impaling','Skewering','Lancing','Boring'], noun: ['Harpoon','Lancet','Rapier','Stiletto','Awl','Spike','Skewer','Impaler'] },
-    fierce:       { adj: ['Fierce','Ferocious','Vicious','Brutal','Savage','Ruthless','Wrathful','Furious'],       noun: ['Fury','Wrath','Rage','Carnage','Havoc','Slaughter','Rampage','Onslaught'] },
-    hitInvuln:    { adj: ['Phasing','Dimensional','Displaced','Shifting','Warping','Flickering','Temporal','Unstable'], noun: ['Phase','Dimension','Rift','Warp','Shift','Blink','Flicker','Glitch'] },
-    scope:        { adj: ['Far-Seeing','Eagle-Eyed','Watchful','Vigilant','Hawkeyed','Scoped','Magnified','Scanning'], noun: ['Outlook','Vista','Lookout','Perch','Watchtower','Observatory','Spyglass','Sentry'] },
-    titanium:     { adj: ['Titanium','Hardened','Tempered','Annealed','Forged','Plated','Dense','Alloyed'],        noun: ['Anvil','Ingot','Plate','Alloy','Carbide','Tungsten','Bastion','Bulkhead'] },
-    stealth:      { adj: ['Hidden','Cloaked','Invisible','Lurking','Masked','Covert','Stealthy','Shrouded'],       noun: ['Shadow','Phantom','Ghost','Specter','Cloak','Veil','Mirage','Shroud'] },
-    sparkDrive:   { adj: ['Sparking','Energized','Supercharged','Amped','Wired','Overclocked','Powered','Igniting'], noun: ['Dynamo','Generator','Spark','Capacitor','Amplifier','Transformer','Reactor','Coil'] },
-    drillbore:    { adj: ['Boring','Drilling','Tunneling','Grinding','Burrowing','Excavating','Penetrating','Gouging'], noun: ['Auger','Drill','Borer','Excavator','Tunneler','Grinder','Digger','Piercer'] },
-    iceRounds:    { adj: ['Frozen','Icy','Subzero','Glacial','Frosted','Frigid','Arctic','Bitter'],               noun: ['Avalanche','Blizzard','Permafrost','Icicle','Snowdrift','Hailstone','Tundra','Frostbite'] },
-    jamRounds:    { adj: ['Jamming','Disrupting','Interfering','Scrambling','Garbling','Blocking','Fouling','Clogging'], noun: ['Jammer','Scrambler','Disruptor','Interference','Static','Noise','Blocker','Dampener'] },
-    incendiary:   { adj: ['Burning','Smoldering','Fiery','Ashen','Charred','Flaming','Fuming','Ignited'],         noun: ['Wildfire','Cinderstorm','Ashfall','Burnout','Brushfire','Firebrand','Blister','Scorch'] },
-    obliterator:  { adj: ['Obliterating','Annihilating','Devastating','Ruinous','Cataclysmic','Apocalyptic','Dooming','Ravaging'], noun: ['Oblivion','Annihilation','Devastation','Ruin','Cataclysm','Apocalypse','Doomsday','Extinction'] },
-    absorber:     { adj: ['Consuming','Devouring','Draining','Hungering','Absorbing','Nullifying','Voracious','Ravenous'], noun: ['Abyss','Maw','Void','Singularity','Vacuum','Siphon','Drain','Nullifier'] },
-    detonator:    { adj: ['Detonating','Volatile','Unstable','Triggered','Primed','Armed','Ticking','Hair-Trigger'], noun: ['Detonator','Bomb','Charge','Primer','Fuse','Trigger','Payload','Ignition'] },
-    stunShock:    { adj: ['Stunning','Paralyzing','Numbing','Freezing','Locking','Seizing','Binding','Disabling'], noun: ['Stun','Paralysis','Lockdown','Seizure','Freeze','Gridlock','Clamp','Snare'] },
-    override:     { adj: ['Hijacked','Overridden','Corrupted','Hacked','Subverted','Infected','Compromised','Breached'], noun: ['Virus','Exploit','Malware','Backdoor','Rootkit','Trojan','Worm','Override'] },
-    cryoCoolant:  { adj: ['Rapid-Cycling','Quick-Loading','Fast-Chambered','Oiled','Greased','Streamlined','Efficient','Smooth'], noun: ['Piston','Cylinder','Crankshaft','Flywheel','Camshaft','Clockwork','Mechanism','Engine'] },
-    flagship:     { adj: ['Grand','Towering','Mighty','Colossal','Supreme','Capital','Paramount','Monumental'],    noun: ['Flagship','Colossus','Titan','Juggernaut','Dreadnought','Mammoth','Fortress','Monument'] },
-    blindRounds:  { adj: ['Blinding','Dazzling','Glaring','Flashing','Searing','Brilliant','Strobing','Radiant'], noun: ['Flashbang','Glare','Strobe','Flare','Blindside','Whiteout','Sunspot','Starburst'] },
-    bouncyShot:   { adj: ['Ricocheting','Bouncing','Deflecting','Rebounding','Caroming','Skipping','Glancing','Angled'], noun: ['Ricochet','Bounce','Rebound','Carom','Deflection','Pinball','Billiard','Springback'] },
-  },
-
-  // ─── MANEUVERS (16 — keyed by MANEUVER_DEFS key) ─────────
-  maneuver: {
-    hyperSpeed:       { adj: ['Warping','Lightspeed','Hypersonic','Blurring','Teleporting','Phasing','Vanishing','Instant'], noun: ['Warp','Hyperspace','Lightspeed','Flash','Blink','Jump','Leap','Streak'] },
-    barrelRoll:       { adj: ['Rolling','Acrobatic','Tumbling','Looping','Aerobatic','Nimble','Flipping','Deft'],  noun: ['Barrel','Roll','Loop','Corkscrew','Tumble','Somersault','Cartwheel','Aileron'] },
-    quickTurn:        { adj: ['Agile','Snapping','Pivoting','Darting','Jinking','Dodging','Feinting','Evasive'],   noun: ['Pivot','Jink','Dodge','Feint','Sidestep','Cutback','Switchback','Snap'] },
-    turretMode:       { adj: ['Entrenched','Fortified','Anchored','Locked','Planted','Rooted','Immovable','Dug-In'], noun: ['Turret','Bunker','Pillbox','Emplacement','Stronghold','Outpost','Redoubt','Bastion'] },
-    serpentine:       { adj: ['Weaving','Zigzagging','Snaking','Undulating','Strafing','Sidestepping','Eluding','Slinking'], noun: ['Serpent','Zigzag','Slalom','Weave','Slink','Sway','Serpentine','Meander'] },
-    panic:            { adj: ['Panicked','Frantic','Desperate','Hysterical','Manic','Crazed','Delirious','Unhinged'], noun: ['Panic','Frenzy','Hysteria','Rampage','Tantrum','Outburst','Meltdown','Breakdown'] },
-    rapidFire:        { adj: ['Rapid','Staccato','Machinegun','Frantic','Blistering','Sustained','Unrelenting','Pounding'], noun: ['Barrage','Drumfire','Hailstorm','Onslaught','Blitz','Torrent','Deluge','Firestorm'] },
-    spinOut:          { adj: ['Spiraling','Careening','Fishtailing','Drifting','Skidding','Swerving','Sliding','Veering'], noun: ['Spinout','Drift','Skid','Fishtail','Swerve','Slide','Whiplash','Tailspin'] },
-    reverse:          { adj: ['Backward','Retreating','Reversed','Contrary','Inverse','Mirrored','Counter','Retrograde'], noun: ['Reversal','Retreat','Backtrack','Recoil','Regression','Fallback','Withdrawal','Rearguard'] },
-    smokescreen:      { adj: ['Obscured','Hazy','Fogbound','Misty','Smoky','Veiled','Clouded','Murky'],           noun: ['Fog','Smokescreen','Haze','Mist','Murk','Smog','Cloud','Shroud'] },
-    doubleTeam:       { adj: ['Mirrored','Cloned','Doubled','Split','Duplicated','Twinned','Copied','Echoed'],     noun: ['Doppelganger','Clone','Double','Decoy','Twin','Echo','Replica','Impostor'] },
-    dumpDebris:       { adj: ['Littering','Dumping','Jettisoned','Trailing','Scattered','Discarded','Ejected','Strewn'], noun: ['Debris','Jetsam','Flotsam','Wake','Trail','Litter','Driftwood','Chaff'] },
-    reflectorShields: { adj: ['Reflecting','Mirroring','Rebounding','Reversing','Glinting','Deflecting','Gleaming','Polished'], noun: ['Reflector','Mirror','Prism','Shield','Deflector','Lens','Facet','Surface'] },
-    repulsor:         { adj: ['Repelling','Blasting','Shoving','Pulsing','Pushing','Expelling','Ejecting','Forceful'], noun: ['Repulsor','Pushback','Shockwave','Gust','Blast','Pulse','Thrust','Wave'] },
-    shockPulse:       { adj: ['Pulsing','Shockwave','Radiating','Emanating','Rippling','Throbbing','Resonant','Quaking'], noun: ['Pulse','Shockwave','Ripple','Tremor','Quake','Resonance','Emanation','Vibration'] },
-    mineField:        { adj: ['Trapped','Mined','Rigged','Laid','Lurking','Buried','Concealed','Scattered'],       noun: ['Minefield','Trap','Snare','Ambush','Pitfall','Deadfall','Hazard','Tripwire'] },
-  },
-
-  // ─── TEMPERAMENTS (temperament index 0–15) ────────────────
-  temperament: [
-    // 0: Berserker
-    { adj: ['Berserk','Raging','Frenzied','Furious','Rabid','Wrathful','Bloodthirsty','Rampaging'],
-      noun: ['Berserker','Fury','Rage','Rampage','Carnage','Havoc','Massacre','Mayhem'] },
-    // 1: Sniper
-    { adj: ['Patient','Calculated','Deliberate','Measured','Methodical','Precise','Surgical','Unhurried'],
-      noun: ['Marksman','Deadeye','Sharpshooter','Sniper','Assassin','Hunter','Predator','Stalker'] },
-    // 2: Soldier
-    { adj: ['Disciplined','Regimented','Trained','Professional','Drilled','Ordered','Dutiful','Loyal'],
-      noun: ['Trooper','Legionnaire','Infantry','Militia','Brigade','Battalion','Regiment','Platoon'] },
-    // 3: Brawler
-    { adj: ['Brawling','Scrappy','Bruising','Rough','Rowdy','Pugnacious','Belligerent','Combative'],
-      noun: ['Brawler','Slugger','Bruiser','Scrapper','Pugilist','Boxer','Roughneck','Ruffian'] },
-    // 4: Dancer
-    { adj: ['Graceful','Elegant','Fluid','Flowing','Lithe','Nimble','Poised','Supple'],
-      noun: ['Dancer','Waltz','Pirouette','Ballet','Tango','Minuet','Arabesque','Flourish'] },
-    // 5: Tactician
-    { adj: ['Strategic','Cunning','Shrewd','Calculating','Devious','Crafty','Scheming','Wily'],
-      noun: ['Strategist','Gambit','Ploy','Scheme','Checkmate','Stratagem','Ruse','Endgame'] },
-    // 6: Scrapper
-    { adj: ['Tenacious','Stubborn','Relentless','Dogged','Gritty','Persistent','Unyielding','Scrappy'],
-      noun: ['Underdog','Scrapper','Survivor','Fighter','Wildcat','Mongrel','Stray','Outcast'] },
-    // 7: Bruiser
-    { adj: ['Hulking','Towering','Crushing','Bludgeoning','Thundering','Stomping','Smashing','Walloping'],
-      noun: ['Bruiser','Tank','Juggernaut','Enforcer','Brute','Ogre','Colossus','Heavyweight'] },
-    // 8: Ghost
-    { adj: ['Ghostly','Invisible','Vanishing','Fleeting','Intangible','Elusive','Untouchable','Incorporeal'],
-      noun: ['Ghost','Phantom','Specter','Shadow','Wraith','Spirit','Shade','Haunt'] },
-    // 9: Wildcard
-    { adj: ['Chaotic','Unpredictable','Random','Volatile','Erratic','Unstable','Reckless','Impulsive'],
-      noun: ['Wildcard','Joker','Maverick','Rogue','Rebel','Anarchist','Gamble','Dice'] },
-    // 10: Bombardier
-    { adj: ['Bombing','Carpet-Bombing','Pounding','Hammering','Raining','Shelling','Strafing','Pelting'],
-      noun: ['Bombardier','Airstrike','Sortie','Barrage','Bombing','Salvo','Cannonade','Fusillade'] },
-    // 11: Razor
-    { adj: ['Lethal','Surgical','Deadly','Razor-Sharp','Fatal','Incisive','Keen','Merciless'],
-      noun: ['Razor','Scalpel','Stiletto','Blade','Edge','Lancet','Rapier','Katana'] },
-    // 12: Acrobat
-    { adj: ['Nimble','Agile','Athletic','Acrobatic','Limber','Springy','Flexible','Light-Footed'],
-      noun: ['Acrobat','Gymnast','Tumbler','Contortionist','Trapeze','Parkour','Stunt','Daredevil'] },
-    // 13: Guardian
-    { adj: ['Protective','Watchful','Vigilant','Steadfast','Stalwart','Devoted','Unwavering','Resolute'],
-      noun: ['Guardian','Protector','Keeper','Defender','Sentinel','Custodian','Shield','Safeguard'] },
-    // 14: Everyman
-    { adj: ['Average','Common','Ordinary','Plain','Simple','Modest','Humble','Everyday'],
-      noun: ['Nomad','Wanderer','Drifter','Traveler','Pilgrim','Vagabond','Rover','Ranger'] },
-    // 15: Enforcer
-    { adj: ['Imposing','Heavy-Handed','Authoritative','Dominating','Oppressive','Commanding','Overbearing','Intimidating'],
-      noun: ['Enforcer','Warden','Overseer','Taskmaster','Dictator','Tyrant','Overlord','Commander'] },
-  ],
-};
-
-
-// ─── SEEDED RNG (don't need to edit below this line) ────────
-
-function _nameGenSeed(d, c, wk, pk, mk, t) {
-  let h = 2166136261;
-  h ^= d; h = Math.imul(h, 16777619); h = h >>> 0;
-  h ^= c; h = Math.imul(h, 16777619); h = h >>> 0;
-  h ^= t; h = Math.imul(h, 16777619); h = h >>> 0;
-  const str = wk + ':' + pk + ':' + mk;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-    h = h >>> 0;
-  }
-  return h;
-}
-
-function _nameGenRand(seed, iteration) {
-  let h = seed + iteration * 374761393;
-  h = Math.imul(h ^ (h >>> 15), 2246822519);
-  h = Math.imul(h ^ (h >>> 13), 3266489917);
-  h = (h ^ (h >>> 16)) >>> 0;
-  return h;
-}
-
-// generateShipName(designIdx, colorIdx, weaponKey, passiveKey, maneuverKey, temperamentIdx)
-function generateShipName(d, c, wk, pk, mk, t) {
-  const seed = _nameGenSeed(d, c, wk, pk, mk, t);
-  const pools = [
-    SHIP_NAME_BANK.shape[d],
-    SHIP_NAME_BANK.color[c],
-    SHIP_NAME_BANK.weapon[wk],
-    SHIP_NAME_BANK.passive[pk],
-    SHIP_NAME_BANK.maneuver[mk],
-    SHIP_NAME_BANK.temperament[t],
-  ].filter(p => p);
-
-  if (pools.length < 2) return 'Unknown Ship';
-
-  const adjPoolIdx = _nameGenRand(seed, 0) % pools.length;
-  const adjPool = pools[adjPoolIdx].adj;
-  const adj = adjPool[_nameGenRand(seed, 1) % adjPool.length];
-
-  let nounPoolIdx = _nameGenRand(seed, 2) % pools.length;
-  if (nounPoolIdx === adjPoolIdx) nounPoolIdx = (nounPoolIdx + 1) % pools.length;
-  const nounPool = pools[nounPoolIdx].noun;
-  const noun = nounPool[_nameGenRand(seed, 3) % nounPool.length];
-
-  return adj + ' ' + noun;
-}
-
-// ── END NAMEGEN ──
-
 // ─── CONFIG ────────────────────────────────────────────────────
 const CFG = {
   WORLD_W: 9600,
@@ -1625,10 +1334,10 @@ const CFG = {
 
 // ─── NAMES & COLORS ───────────────────────────────────────────
 const PILOT_NAMES = [
-  'FIGHTER', 'LEAF', 'BOMBER', 'ARROW',
-  'HEART', 'JET', 'MONSTER', 'EDGE',
-  'GHOST', 'POINT', 'TWISTER', 'SURVIVOR',
-  'HAWK', 'FRIGATE', 'CRESCENT', 'ENFORCER'
+  'RED', 'GREEN', 'BLUE', 'ORANGE',
+  'PINK', 'CYAN', 'LIME', 'CORAL',
+  'PURPLE', 'WHITE', 'YELLOW', 'MAGENTA',
+  'SKY', 'GOLD', 'SILVER', 'VIOLET'
 ];
 
 // Ship design defs keyed by index string for dropdown compatibility
@@ -1646,19 +1355,6 @@ const PILOT_COLORS = [
   '#aa44ff', '#ffffff', '#ffff44', '#ff00ff',
   '#55bbff', '#ffcc00', '#bbbbcc', '#8844dd'
 ];
-const COLOR_NAMES = [
-  'RED', 'GREEN', 'BLUE', 'ORANGE',
-  'PINK', 'CYAN', 'LIME', 'CORAL',
-  'PURPLE', 'WHITE', 'YELLOW', 'MAGENTA',
-  'SKY', 'GOLD', 'SILVER', 'VIOLET'
-];
-function colorName(hex) { const i = PILOT_COLORS.indexOf(hex); return i >= 0 ? COLOR_NAMES[i] : ''; }
-
-// ═══════════════════════════════════════════════════════════════
-// STARCHIP PROCEDURAL NAME GENERATOR
-// Each of 6 traits × 16 values = 96 entries, each with 8 adj + 8 nouns
-// Seeded RNG ensures same card always gets same name
-// ═══════════════════════════════════════════════════════════════
 
 // ─── PREDETERMINED PERSONALITY PROFILES ───────────────────────
 const PRESET_PROFILES = [
@@ -1723,7 +1419,7 @@ const WEAPON_DEFS = {
 // RED=alternating, GREEN=chaotic, BLUE=grenade, ORANGE=flamethrower,
 // PINK=gatling, CYAN=homing, LIME=snake, CORAL=shotgun,
 // PURPLE=scrap, WHITE=basic, YELLOW=lightning, MAGENTA=sniper
-const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive','triple','boomerang','doublehelix'];
+const SHIP_WEAPONS = ['alternating','chaotic','grenade','flamethrower','gatling','homing','snake','shotgun','scrap','basic','lightning','sniper','cyclone','drone','crossshot','concussive'];
 
 const WEAPON_KEYS = Object.keys(WEAPON_DEFS);
 
@@ -1757,7 +1453,7 @@ const PASSIVE_DEFS = {
   titanium:    { name: 'Titanium',     desc: '-25% incoming damage' },
   stealth:     { name: 'Stealth',      desc: 'Perceived as 1.5x distance' },
   sparkDrive:  { name: 'Spark Drive',  desc: '+20% projectile speed' },
-  drillbore:   { name: 'Drillbore',    desc: 'Survives collisions (10% chip dmg)' },
+  drillbore:   { name: 'Drillbore',    desc: 'Survives collisions (5% chip dmg)' },
   iceRounds:   { name: 'Ice Rounds',   desc: 'Slows + 0.25 HP DoT' },
   jamRounds:   { name: 'Jam Rounds',   desc: 'Jams hit targets\' fire rate' },
   incendiary:  { name: 'Incendiary',   desc: '50% damage as burn DoT, trail dmg' },
@@ -1777,7 +1473,7 @@ const PASSIVE_KEYS = Object.keys(PASSIVE_DEFS).filter(k => k !== 'none');
 // RED=nitro, GREEN=bouncyShot, BLUE=obliterator, ORANGE=incendiary,
 // PINK=sparkDrive, CYAN=shield, LIME=absorber, CORAL=drillbore,
 // PURPLE=stealth, WHITE=hitInvuln, YELLOW=stunShock, MAGENTA=scope
-const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override','scrapRepair','bioHull','piercing','fierce','titanium','jamRounds','detonator','cryoCoolant','blindRounds'];
+const SHIP_PASSIVES = ['nitro','bouncyShot','stealth','incendiary','sparkDrive','shield','absorber','drillbore','obliterator','hitInvuln','stunShock','scope','iceRounds','flagship','gyro','override'];
 
 // Passives that are useless in one-hit-kill (no unique weapons) matches
 const ONESHOT_USELESS_PASSIVES = ['hitInvuln'];
@@ -3032,7 +2728,7 @@ const settings = {
   maneuvers: false,
   shipHP: 3,
   numShips: 16,
-  autoRestart: true,
+  autoRestart: false,
   chaosMode: false,
   matchLogger: false,
   showWeaponTag: false,
@@ -3234,7 +2930,6 @@ let countdown = false;
 const MAX_TEAMS = 6;
 const TEAM_COLORS = ['#ff5050','#5096ff','#50ff50','#ffcc00','#ff50ff','#50ffff'];
 let matchMode = 'ffa'; // 'ffa' or 'teams'
-let _starchipSavedLineup = null; // persists across rematches
 let teamAssignments = []; // array of arrays of ship indices
 let teamNames = [];
 let teamWeapons = []; // per-team weapon key selections (empty = use global)
@@ -3245,8 +2940,12 @@ let _origTeamSizes = [];
 let _teamCoreColors = [];
 let teamPalettes = {};
 let countdownTimer = 0;
-let _lastCountdownSec = -1;
 const COUNTDOWN_DURATION = 5;
+let flyInPhase = false;
+let flyInElapsed = 0;
+const FLY_IN_DURATION = 1.2;
+const FLY_IN_STAGGER = 1.0;
+let flyInTeamLabels = [];
 let winner = null;
 let simSpeed = 1;
 let finaleMode = false;
@@ -3454,31 +3153,6 @@ function playAsteroidBreak() {
   osc2.stop(t + 0.2);
 }
 
-// Quiet asteroid break for tournament bracket elimination
-function playTourneyEliminate() {
-  ensureAudio();
-  const t = audioCtx.currentTime;
-  const vol = 0.08;
-  const osc = audioCtx.createOscillator();
-  const osc2 = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  osc2.connect(gain);
-  gain.connect(masterGain);
-  osc.type = 'sawtooth';
-  osc2.type = 'square';
-  osc.frequency.setValueAtTime(150, t);
-  osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-  osc2.frequency.setValueAtTime(90, t);
-  osc2.frequency.exponentialRampToValueAtTime(20, t + 0.15);
-  gain.gain.setValueAtTime(vol, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-  osc.start(t);
-  osc2.start(t);
-  osc.stop(t + 0.2);
-  osc2.stop(t + 0.2);
-}
-
 function playShipHit() {
   ensureAudio();
   const vol = getZoomVolume() * 0.3;
@@ -3652,60 +3326,6 @@ function playDebuff() {
   noise.stop(t + 0.3);
 }
 
-// Countdown tick — Arcade Blip: short square wave bip, final tick pitches up
-function playCountdownTick(secsLeft) {
-  ensureAudio();
-  const t = audioCtx.currentTime;
-  const freq = 440;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain); gain.connect(masterGain);
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(freq, t);
-  gain.gain.setValueAtTime(0.25, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-  osc.start(t); osc.stop(t + 0.2);
-}
-
-// Match start — Warp Pipe: descending wobble into upward pop (half volume)
-function playMatchStart() {
-  ensureAudio();
-  const t = audioCtx.currentTime;
-  const vol = 0.5;
-  // Descending wobble
-  const o1 = audioCtx.createOscillator();
-  const g1 = audioCtx.createGain();
-  o1.connect(g1); g1.connect(masterGain);
-  o1.type = 'square';
-  o1.frequency.setValueAtTime(600, t);
-  o1.frequency.setValueAtTime(500, t + 0.03);
-  o1.frequency.setValueAtTime(400, t + 0.06);
-  o1.frequency.setValueAtTime(300, t + 0.09);
-  o1.frequency.setValueAtTime(200, t + 0.12);
-  g1.gain.setValueAtTime(0.18 * vol, t);
-  g1.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-  o1.start(t); o1.stop(t + 0.2);
-  // Pop up
-  const o2 = audioCtx.createOscillator();
-  const g2 = audioCtx.createGain();
-  o2.connect(g2); g2.connect(masterGain);
-  o2.type = 'square';
-  o2.frequency.setValueAtTime(300, t + 0.16);
-  o2.frequency.linearRampToValueAtTime(1200, t + 0.22);
-  g2.gain.setValueAtTime(0.2 * vol, t + 0.16);
-  g2.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-  o2.start(t + 0.16); o2.stop(t + 0.23);
-  // Ring
-  const o3 = audioCtx.createOscillator();
-  const g3 = audioCtx.createGain();
-  o3.connect(g3); g3.connect(masterGain);
-  o3.type = 'triangle';
-  o3.frequency.setValueAtTime(1200, t + 0.22);
-  g3.gain.setValueAtTime(0.12 * vol, t + 0.22);
-  g3.gain.exponentialRampToValueAtTime(0.001, t + 0.37);
-  o3.start(t + 0.22); o3.stop(t + 0.38);
-}
-
 // ─── RESIZE ───────────────────────────────────────────────────
 function resize() {
   W = canvas.width = window.innerWidth;
@@ -3801,7 +3421,7 @@ function createShipIconSVG(shipId, color, size, forceUnique) {
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   svg.style.flexShrink = '0';
   svg.style.display = 'block';
-  const verts = getShipVerts(shipId, forceUnique !== false);
+  const verts = getShipVerts(shipId, forceUnique);
   const r = size * 0.38;
   const cx = size / 2, cy = size / 2;
   const points = verts.map(v => `${cx + v[0] * r},${cy + v[1] * r}`).join(' ');
@@ -3854,7 +3474,7 @@ function createShipIcon(shipId, color, size, forceUnique) {
   c.height = size;
   c.className = 'ship-icon';
   const ctx = c.getContext('2d');
-  const verts = getShipVerts(shipId, forceUnique !== false);
+  const verts = getShipVerts(shipId, forceUnique);
   const r = size * 0.38;
   ctx.save();
   ctx.translate(size / 2, size / 2);
@@ -3972,7 +3592,6 @@ function applyChaosMode() {
     settings.uniqueShips = true;
   } else {
     settings.randomPersonalities = Math.random() < 0.5;
-    settings.uniqueShips = Math.random() < 0.5;
     // Weapon modes: 40% unique, 30% random, 30% basic
     const wpnRoll = Math.random();
     if (wpnRoll < 0.4) {
@@ -3988,6 +3607,7 @@ function applyChaosMode() {
     settings.numShips = shipOptions[randInt(0, shipOptions.length - 1)];
     settings.passives = Math.random() < 0.6;
     settings.maneuvers = Math.random() < 0.4;
+    settings.uniqueShips = Math.random() < 0.5;
   }
 
   // Sync UI toggles
@@ -3997,7 +3617,6 @@ function applyChaosMode() {
   document.querySelector('[data-setting="randomWeapons"]').classList.toggle('on', settings.randomWeapons);
   document.querySelector('[data-setting="passives"]').classList.toggle('on', settings.passives);
   document.querySelector('[data-setting="maneuvers"]').classList.toggle('on', settings.maneuvers);
-  document.querySelector('[data-setting="autoRestart"]').classList.toggle('on', settings.autoRestart);
 
   // Sync ship count buttons
   document.querySelectorAll('#ship-count-selector .hp-btn').forEach(b => {
@@ -4025,6 +3644,9 @@ function init() {
   gameTime = 0;
   gameOver = false;
   winner = null;
+  flyInPhase = false;
+  flyInElapsed = 0;
+  flyInTeamLabels = [];
   finaleMode = false;
   finaleTimer = 0;
   finaleSlowMo = 1;
@@ -4213,14 +3835,14 @@ function init() {
   const _posTeamLookup = [];
   if (matchMode === 'teams') {
     for (let t = 0; t < teamAssignments.length; t++) {
-      for (const idx of teamAssignments[t]) _posTeamLookup[idx] = t + 1;
+      for (const idx of teamAssignments[t]) _posTeamLookup.push(t + 1);
     }
   }
 
   for (let si = 0; si < activeShips.length; si++) {
     const i = activeShips[si];
     const sp = spawnPositions[si];
-    const _teamNum = _posTeamLookup[i] || 0;
+    const _teamNum = _posTeamLookup[si] || 0;
     // Ship design override: if team has designs selected, use one from pool
     let _designType = i;
     if (_teamNum > 0 && teamShipDesigns[_teamNum - 1] && teamShipDesigns[_teamNum - 1].length > 0) {
@@ -4231,7 +3853,6 @@ function init() {
     const faceAng = Math.atan2(spawnCenter.y - sp.y, spawnCenter.x - sp.x);
     ships.push({
       id: si,          // unique per instance
-      _scIdx: i,       // original config index for StarChip override
       shipType: _designType, // ship design (may be overridden by team design pool)
       _designForced: _designType !== i, // true if design was overridden by team pool
       name: PILOT_NAMES[i],
@@ -4309,9 +3930,6 @@ function init() {
       burnTimer: 0,     // incendiary DoT remaining
       burnDps: 0,       // incendiary damage per second
       iceDotTimer: 0,   // ice rounds DoT remaining
-      // Debuff source colors (attacker's ship color)
-      burnColor: null, iceColor: null, jamColor: null,
-      stunColor: null, overrideColor: null, blindColor: null,
       _bulletThreat: false,
       _emergencyEvade: false,
       team: _teamNum,
@@ -4476,12 +4094,15 @@ function init() {
   }
 
   document.getElementById('winner-overlay').classList.remove('show');
-  document.getElementById('arena-btn').style.display = 'none';
+  document.getElementById('tourney-progress-banner').classList.remove('active');
   showScoreboard = false;
   document.getElementById('alive-num').textContent = settings.numShips;
+  document.getElementById('alive-counter').style.display = '';
+  document.getElementById('camera-mode').style.display = '';
   buildScoreboard();
   buildPregameRoster();
   pregame = true;
+  document.getElementById('settings-btn').classList.remove('match-hidden');
   countdown = false;
   countdownTimer = 0;
   document.getElementById('countdown-overlay').classList.add('hidden');
@@ -4536,23 +4157,47 @@ function spawnThrustParticle(ship) {
     angles.push(ship.ang + Math.PI - 0.524); // -30°
   }
 
-  // Pick exhaust color: team mode uses random color from team palette
+  const isBio = ship.passive === 'bioHull';
   const teamColors = (ship.team > 0 && teamPalettes[ship.team]) ? teamPalettes[ship.team] : null;
 
-  for (const exAng of angles) {
-    const isBio = ship.passive === 'bioHull';
-    const exColor = isBio ? '#44ff44' : teamColors ? teamColors[randInt(0, teamColors.length - 1)] : ship.color;
-    particles.push({
-      x: bx + rand(-3, 3),
-      y: by + rand(-3, 3),
-      vx: Math.cos(exAng) * rand(30, 80) + ship.vx * 0.3,
-      vy: Math.sin(exAng) * rand(30, 80) + ship.vy * 0.3,
-      life: rand(0.45, 1.35) * lifeMult,
-      maxLife: 1.35 * lifeMult,
-      color: exColor,
-      size: rand(1, 2.5),
-      isPlus: isBio,
-    });
+  // Multi-color team trails: separate nozzles offset perpendicular to ship heading
+  if (teamColors && teamColors.length > 1 && !isBio) {
+    const perp = ship.ang + Math.PI / 2;
+    const nozzleSpread = Math.min(ship.r * 0.6, 5 + teamColors.length); // total spread
+    for (const exAng of angles) {
+      for (let c = 0; c < teamColors.length; c++) {
+        // Spread nozzles evenly: -0.5..+0.5 mapped to -spread..+spread
+        const t = teamColors.length === 1 ? 0 : (c / (teamColors.length - 1) - 0.5) * 2;
+        const ox = Math.cos(perp) * nozzleSpread * t;
+        const oy = Math.sin(perp) * nozzleSpread * t;
+        particles.push({
+          x: bx + ox + rand(-1.5, 1.5),
+          y: by + oy + rand(-1.5, 1.5),
+          vx: Math.cos(exAng) * rand(30, 80) + ship.vx * 0.3,
+          vy: Math.sin(exAng) * rand(30, 80) + ship.vy * 0.3,
+          life: rand(0.45, 1.35) * lifeMult,
+          maxLife: 1.35 * lifeMult,
+          color: teamColors[c],
+          size: rand(1, 2.5),
+        });
+      }
+    }
+  } else {
+    // Single color exhaust (FFA, single-color teams, or bioHull)
+    for (const exAng of angles) {
+      const exColor = isBio ? '#44ff44' : teamColors ? teamColors[0] : ship.color;
+      particles.push({
+        x: bx + rand(-3, 3),
+        y: by + rand(-3, 3),
+        vx: Math.cos(exAng) * rand(30, 80) + ship.vx * 0.3,
+        vy: Math.sin(exAng) * rand(30, 80) + ship.vy * 0.3,
+        life: rand(0.45, 1.35) * lifeMult,
+        maxLife: 1.35 * lifeMult,
+        color: exColor,
+        size: rand(1, 2.5),
+        isPlus: isBio,
+      });
+    }
   }
 }
 
@@ -4970,34 +4615,136 @@ function update(rawDt) {
   // During countdown, render ships but don't simulate gameplay
   if (countdown) {
     countdownTimer -= rawDt;
-    // Update countdown display
-    const secs = Math.ceil(Math.max(0, countdownTimer));
-    document.getElementById('countdown-timer').textContent = 'MATCH BEGINNING IN ' + secs + '!';
-    // Play tick sound on each new second
-    if (secs !== _lastCountdownSec && secs > 0) {
-      _lastCountdownSec = secs;
-      playCountdownTick(secs);
-    }
-    // Frame camera around ship positions
-    const cdAlive = ships.filter(s => s.alive);
-    if (cdAlive.length > 0) {
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      for (const s of cdAlive) {
-        minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
-        minY = Math.min(minY, s.y); maxY = Math.max(maxY, s.y);
+
+    // Fly-in animation for team modes
+    if (flyInPhase) {
+      flyInElapsed += rawDt;
+      const numTeams = teamAssignments.length;
+      let allArrived = true;
+
+      for (const ship of ships) {
+        if (ship._flyTeamIdx == null) continue;
+        const teamStart = ship._flyTeamIdx * FLY_IN_STAGGER;
+        const progress = Math.max(0, Math.min(1, (flyInElapsed - teamStart) / FLY_IN_DURATION));
+        const t = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        ship.x = ship._flyStartX + (ship._flyTargetX - ship._flyStartX) * t;
+        ship.y = ship._flyStartY + (ship._flyTargetY - ship._flyStartY) * t;
+        ship._flyAlpha = progress > 0 ? Math.min(1, progress * 2) : 0; // fade in over first half
+        if (progress > 0 && progress < 1) {
+          ship.ang = Math.atan2(ship._flyTargetY - ship._flyStartY, ship._flyTargetX - ship._flyStartX);
+          if (Math.random() < 0.5) spawnThrustParticle(ship);
+        }
+        if (progress >= 1) {
+          const _cx = CFG.WORLD_W / 2, _cy = CFG.WORLD_H / 2;
+          ship.ang = Math.atan2(_cy - ship.y, _cx - ship.x);
+          ship._flyAlpha = 1;
+        }
+        if (progress < 1) allArrived = false;
       }
-      targetCamX = (minX + maxX) / 2;
-      targetCamY = (minY + maxY) / 2;
-      const camPad = 200 + cdAlive.length * 15;
-      const spreadX = maxX - minX + camPad;
-      const spreadY = maxY - minY + camPad;
-      targetZoom = Math.min(W / spreadX, H / spreadY);
-      targetZoom = Math.max(0.15, Math.min(1.5, targetZoom));
+
+      // Update team labels
+      for (let ti = 0; ti < flyInTeamLabels.length; ti++) {
+        const label = flyInTeamLabels[ti];
+        const teamStart = ti * FLY_IN_STAGGER;
+        const progress = Math.max(0, Math.min(1, (flyInElapsed - teamStart) / FLY_IN_DURATION));
+        if (progress >= 0.8 && !label.arrived) label.arrived = true;
+        if (label.arrived) label.alpha = Math.min(1, label.alpha + rawDt * 3);
+      }
+
+      // End fly-in (labels persist until countdown ends)
+      const flyInEnd = (numTeams - 1) * FLY_IN_STAGGER + FLY_IN_DURATION + 0.5;
+      if (flyInElapsed >= flyInEnd) {
+        flyInPhase = false;
+        for (const ship of ships) {
+          if (ship._flyTargetX != null) { ship.x = ship._flyTargetX; ship.y = ship._flyTargetY; }
+          delete ship._flyAlpha;
+        }
+      }
+
+      // Update particles during fly-in
+      const pdt = rawDt * 0.5;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * pdt; p.y += p.vy * pdt;
+        p.vx *= (1 - 3 * pdt); p.vy *= (1 - 3 * pdt);
+        p.life -= pdt;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
     }
-    const camLerpCd = 1 - Math.pow(1 - 0.05, rawDt * 60);
-    cameraX = lerp(cameraX, targetCamX, camLerpCd);
-    cameraY = lerp(cameraY, targetCamY, camLerpCd);
-    camZoom = lerp(camZoom, targetZoom, camLerpCd);
+
+    // Timer display
+    const secs = Math.ceil(Math.max(0, countdownTimer));
+    if (matchMode === 'teams') {
+      // Big centered countdown number only
+      if (secs > 0) {
+        document.getElementById('countdown-timer').textContent = secs;
+        document.getElementById('countdown-timer').style.fontSize = '72px';
+      } else {
+        document.getElementById('countdown-timer').textContent = 'FIGHT!';
+        document.getElementById('countdown-timer').style.fontSize = '72px';
+      }
+    } else {
+      document.getElementById('countdown-timer').style.fontSize = '';
+      document.getElementById('countdown-timer').textContent = 'MATCH BEGINNING IN ' + secs + '!';
+    }
+
+    // Camera — subtle: stay mostly centered, smooth drift toward arriving team
+    if (flyInPhase) {
+      const cx = CFG.WORLD_W / 2, cy = CFG.WORLD_H / 2;
+      // Blend smoothly between team positions based on elapsed time
+      let shiftX = 0, shiftY = 0;
+      for (let ti = 0; ti < flyInTeamLabels.length; ti++) {
+        const label = flyInTeamLabels[ti];
+        const teamStart = ti * FLY_IN_STAGGER;
+        // Each team's influence: ramp up from its start, hold, ramp down when next starts
+        const fadeIn = Math.min(1, Math.max(0, (flyInElapsed - teamStart) / (FLY_IN_DURATION * 0.5)));
+        const nextStart = (ti + 1) * FLY_IN_STAGGER;
+        const fadeOut = ti < flyInTeamLabels.length - 1
+          ? 1 - Math.min(1, Math.max(0, (flyInElapsed - nextStart) / (FLY_IN_DURATION * 0.5)))
+          : 1;
+        const weight = fadeIn * fadeOut;
+        shiftX += (label.x - cx) * 0.15 * weight;
+        shiftY += (label.y - cy) * 0.15 * weight;
+      }
+      // Zoom to frame ship target positions
+      let _minX = Infinity, _maxX = -Infinity, _minY = Infinity, _maxY = -Infinity;
+      for (const s of ships) {
+        const tx = s._flyTargetX != null ? s._flyTargetX : s.x;
+        const ty = s._flyTargetY != null ? s._flyTargetY : s.y;
+        _minX = Math.min(_minX, tx); _maxX = Math.max(_maxX, tx);
+        _minY = Math.min(_minY, ty); _maxY = Math.max(_maxY, ty);
+      }
+      const _camPad = 200 + ships.length * 15;
+      const _spreadX = _maxX - _minX + _camPad;
+      const _spreadY = _maxY - _minY + _camPad;
+      const targetZ = Math.max(0.15, Math.min(1.5, Math.min(W / _spreadX, H / _spreadY)));
+      const camLerp = 1 - Math.pow(0.015, rawDt);
+      cameraX = lerp(cameraX, cx + shiftX, camLerp);
+      cameraY = lerp(cameraY, cy + shiftY, camLerp);
+      camZoom = lerp(camZoom, targetZ, camLerp);
+    } else {
+      // Standard countdown camera — frame around ship positions
+      const cdAlive = ships.filter(s => s.alive);
+      if (cdAlive.length > 0) {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const s of cdAlive) {
+          minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
+          minY = Math.min(minY, s.y); maxY = Math.max(maxY, s.y);
+        }
+        targetCamX = (minX + maxX) / 2;
+        targetCamY = (minY + maxY) / 2;
+        const camPad = 200 + cdAlive.length * 15;
+        const spreadX = maxX - minX + camPad;
+        const spreadY = maxY - minY + camPad;
+        targetZoom = Math.min(W / spreadX, H / spreadY);
+        targetZoom = Math.max(0.15, Math.min(1.5, targetZoom));
+      }
+      const camLerpCd = 1 - Math.pow(1 - 0.05, rawDt * 60);
+      cameraX = lerp(cameraX, targetCamX, camLerpCd);
+      cameraY = lerp(cameraY, targetCamY, camLerpCd);
+      camZoom = lerp(camZoom, targetZoom, camLerpCd);
+    }
+
     if (countdownTimer <= 0) {
       endCountdown();
     }
@@ -5069,11 +4816,12 @@ function update(rawDt) {
     // ── DEBUFF VISUAL EFFECTS ──
     // Incendiary burn: fire particles rising from ship
     if (ship.burnTimer > 0 && Math.random() < 0.5) {
+      const bc = ship.burnColor || '#ff6600';
       particles.push({
         x: ship.x + rand(-ship.r, ship.r), y: ship.y + rand(-ship.r, ship.r),
         vx: rand(-20, 20), vy: rand(-60, -30),
         life: rand(0.2, 0.4), maxLife: 0.4,
-        color: ship.burnColor || '#ff6600', size: rand(2, 4),
+        color: bc, size: rand(2, 4),
       });
     }
     // Ice Rounds: diamond and snowflake particles emitted from affected ship
@@ -5322,7 +5070,6 @@ function update(rawDt) {
           for (let di = 0; di < w.droneCount; di++) {
             shipDrones.push({
               ownerId: ship.id,
-              ownerTeam: ship.team || 0,
               color: ship.color,
               x: ship.x, y: ship.y,
               vx: 0, vy: 0,
@@ -5575,30 +5322,29 @@ function update(rawDt) {
     const _preTrailCount = particles.length;
     if (b.type === 'flamethrower') {
       // Flamethrower: dense flickering flame particles
-      // Skip if bullet has a debuff passive — debuff aura trail replaces these
-      const _flameDebuffs = ['iceRounds', 'jamRounds', 'stunShock', 'override', 'blindRounds'];
-      const _flameHasDebuff = _flameDebuffs.includes(b.ownerPassive);
-      if (!_flameHasDebuff) {
-      const age = gameTime - b.spawnTime;
-      const nearShip = age < 0.2;
-      const spawnCount = nearShip ? 1 : 3;
-      const spawnChance = nearShip ? 0.3 : 1;
-      if (Math.random() < spawnChance) {
-        for (let tp = 0; tp < spawnCount; tp++) {
-          const tLife = rand(0.15, 0.35);
-          const fade = Math.max(0.3, 1 - age / (b.life + age));
-          particles.push({
-            x: b.x + rand(-4, 4),
-            y: b.y + rand(-4, 4),
-            vx: b.vx * rand(-0.05, 0.1) + rand(-20, 20),
-            vy: b.vy * rand(-0.05, 0.1) + rand(-20, 20),
-            life: tLife,
-            maxLife: tLife,
-            color: b.color,
-            size: rand(1.5, 4) * fade,
-          });
+      // Skip if debuff passive — debuff aura particles replace these
+      const _ftDebuffs = ['iceRounds', 'jamRounds', 'stunShock', 'override', 'blindRounds'];
+      if (!_ftDebuffs.includes(b.ownerPassive)) {
+        const age = gameTime - b.spawnTime;
+        const nearShip = age < 0.2;
+        const spawnCount = nearShip ? 1 : 3;
+        const spawnChance = nearShip ? 0.3 : 1;
+        if (Math.random() < spawnChance) {
+          for (let tp = 0; tp < spawnCount; tp++) {
+            const tLife = rand(0.15, 0.35);
+            const fade = Math.max(0.3, 1 - age / (b.life + age));
+            particles.push({
+              x: b.x + rand(-4, 4),
+              y: b.y + rand(-4, 4),
+              vx: b.vx * rand(-0.05, 0.1) + rand(-20, 20),
+              vy: b.vy * rand(-0.05, 0.1) + rand(-20, 20),
+              life: tLife,
+              maxLife: tLife,
+              color: b.color,
+              size: rand(1.5, 4) * fade,
+            });
+          }
         }
-      }
       }
     } else if (b.sineAmp && b.type !== 'doublehelix') {
       // Snake bullets: dense, long-lasting glowing trail
@@ -5793,10 +5539,11 @@ function update(rawDt) {
       // Faster bullets spawn trails more reliably (lightning at 1600 u/s needs help)
       let spawnChance = Math.min(0.95, 0.5 + bSpd / 3000);
       if (b.ownerPassive === 'stunShock') spawnChance *= 0.5; // half density for stun
-      const _isFlame = b.type === 'flamethrower';
-      const _debuffLoops = _isFlame ? 2 : 1; // denser for flamethrower (replaces normal trail)
+      // Flamethrower debuffs: boost density to replace normal flame particles
+      const debuffCount = b.type === 'flamethrower' ? 2 : 1;
+      if (b.type === 'flamethrower') spawnChance = Math.min(0.95, spawnChance * 1.5);
       if (bSpd > 10 && Math.random() < spawnChance) {
-       for (let _dl = 0; _dl < _debuffLoops; _dl++) {
+        for (let _dc = 0; _dc < debuffCount; _dc++) {
         const perpAng = Math.atan2(b.vy, b.vx) + Math.PI * 0.5;
         const side = Math.random() < 0.5 ? 1 : -1;
         if (b.ownerPassive === 'stunShock') {
@@ -5820,8 +5567,8 @@ function update(rawDt) {
           });
         } else if (b.ownerPassive === 'iceRounds') {
           // Ice crystals: diamonds and snowflakes
-          // Dragonfire + ice is very particle-heavy — cut 60%
-          if (_isFlame && Math.random() < 0.6) continue;
+          // Dragonfire + ice: cut 60% of particles to avoid slowdown
+          if (b.type === 'flamethrower' && Math.random() < 0.6) { /* skip */ } else {
           const spread = rand(6, 16);
           const px = b.x + Math.cos(perpAng) * spread * side;
           const py = b.y + Math.sin(perpAng) * spread * side;
@@ -5836,6 +5583,7 @@ function update(rawDt) {
             isDiamond: iceType === 'diamond', isSnowflake: iceType === 'snowflake',
             spinAng: rand(0, Math.PI * 2),
           });
+          }
         } else {
           const spread = rand(4, (b.size || 2) + 10);
           const px = b.x + Math.cos(perpAng) * spread * side;
@@ -5850,7 +5598,7 @@ function update(rawDt) {
             size: rand(1, 2.5),
           });
         }
-       } // end _debuffLoops
+        } // end debuffCount loop
       }
     }
     } // end finale trail slowdown
@@ -5973,11 +5721,11 @@ function update(rawDt) {
       // Near-miss debuff detection: 2x hit radius applies effect only (no damage) — skip for friendlies
       const attacker = shipById[b.owner];
       if (attacker && !isFriendly && bDist < (ship.r + 4) * 2 && bDist >= ship.r + 4) {
-        if (attacker.passive === 'blindRounds') { ship.blindTimer = 3; ship.blindColor = b.color; }
-        if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = b.color; }
-        if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = b.color; }
-        if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = b.color; }
-        if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = b.color; }
+        if (attacker.passive === 'blindRounds') { ship.blindTimer = 3; ship.blindColor = attacker.color; }
+        if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = attacker.color; }
+        if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = attacker.color; }
+        if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = attacker.color; }
+        if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = attacker.color; }
         if (['blindRounds','iceRounds','jamRounds','stunShock','override'].includes(attacker.passive)) playDebuff();
       }
 
@@ -6033,7 +5781,7 @@ function update(rawDt) {
             ship.hp -= dmg * 0.5;
             ship.burnTimer = 2.0;
             ship.burnDps = (dmg * 0.5) / 2.0; // remaining 50% over 2s
-            ship.burnColor = b.color;
+            ship.burnColor = b.color || '#ff6600';
           } else {
             ship.hp -= dmg;
           }
@@ -6068,11 +5816,11 @@ function update(rawDt) {
           // Ice/Jam rounds: apply debuff based on attacker's passive
           const attacker = shipById[b.owner];
           if (attacker) {
-            if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = b.color; }
-            if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = b.color; }
-            if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = b.color; }
-            if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = b.color; }
-            if (attacker.passive === 'blindRounds') { ship.blindTimer = 3; ship.blindColor = b.color; }
+            if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = attacker.color; }
+            if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = attacker.color; }
+            if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = attacker.color; }
+            if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = attacker.color; }
+            if (attacker.passive === 'blindRounds') { ship.blindTimer = 3; ship.blindColor = attacker.color; }
             if (['blindRounds','iceRounds','jamRounds','stunShock','override','incendiary'].includes(attacker.passive)) playDebuff();
           }
           if (ship.hp <= 0) {
@@ -6279,14 +6027,13 @@ function update(rawDt) {
             ship.lastAttacker = p.incOwner;
             ship.lastAttackerTime = gameTime;
             ship.hpBarTimer = 0.75;
-            spawnExplosion(p.x, p.y, p.color || '#f80', 4, 30);
+            spawnExplosion(p.x, p.y, '#f80', 4, 30);
             const attacker = shipById[p.incOwner];
-            const _trailColor = p.color || (attacker ? attacker.color : '#f80');
             if (attacker) {
-              if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = _trailColor; }
-              if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = _trailColor; }
-              if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = _trailColor; }
-              if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = _trailColor; }
+              if (attacker.passive === 'iceRounds') { ship.iceSlow = 2; ship.iceDotTimer = 2.0; ship.iceColor = attacker.color; }
+              if (attacker.passive === 'jamRounds') { ship.jamSlow = 4; ship.jamColor = attacker.color; }
+              if (attacker.passive === 'stunShock') { ship.stunTimer = 1.75; ship.stunColor = attacker.color; }
+              if (attacker.passive === 'override') { ship.overrideTimer = 2; ship.overrideTurnDir = Math.random() < 0.5 ? -1 : 1; ship.overrideColor = attacker.color; }
             }
             if (ship.passive === 'hitInvuln' && ship.hp > 0 && ship.hitInvulnCooldown <= 0) {
               ship.invuln = 1; ship.hitInvulnCooldown = 8;
@@ -6595,6 +6342,7 @@ function update(rawDt) {
             const tAng = angle(d, closest);
             d.vx = Math.cos(tAng) * d.speed;
             d.vy = Math.sin(tAng) * d.speed;
+            playShootRise();
             // Breakaway ellipse particle
             shockwaves.push({ x: d.x, y: d.y, r: 0, maxR: 15, life: 0.2, maxLife: 0.2, color: d.color, ellipse: true, ellipseAng: tAng });
           }
@@ -6914,10 +6662,22 @@ function update(rawDt) {
   updateScoreboard();
 }
 
+function updateBannerShipIcon(ship) {
+  if (matchMode !== 'teams' || !ship.team) return;
+  const t = ship.team - 1;
+  let offset = 0;
+  for (let i = 0; i < t; i++) offset += teamAssignments[i].length;
+  const idx = ship.id - offset;
+  const icon = document.querySelector(`.banner-team-ships .ship-icon[data-banner-ship-id="${t}-${idx}"]`);
+  if (icon) icon.classList.add('eliminated');
+}
+
 function killShip(ship, killerId) {
   ship.alive = false;
   ship.deathTime = gameTime;
   ship.placement = ships.filter(s => s.alive).length + 1;
+  // Update tournament banner ship icons
+  updateBannerShipIcon(ship);
   // Death explosion — longer-lasting particles than normal (3x for flagship)
   const deathLifeMult = ship.passive === 'flagship' ? 3 : 1;
   const deathCount = ship.passive === 'flagship' ? 80 : 40;
@@ -6975,11 +6735,10 @@ function killShip(ship, killerId) {
   }
   if (killerId < 0) asteroidKills++;
 
-  const killerLabel = killer ? (killer.playerName ? killer.playerName + ' — ' + killer.name : killer.name) : 'ASTEROID';
+  const killerName = killer ? killer.name : 'ASTEROID';
   const killerColor = killer ? killer.color : '#888';
-  ship.killedBy = killerLabel;
-  const victimLabel = ship.playerName ? ship.playerName + ' — ' + ship.name : ship.name;
-  addKillMessage(killerLabel, killerColor, victimLabel, ship.color);
+  ship.killedBy = killerName;
+  addKillMessage(killerName, killerColor, ship.name, ship.color);
 
   const aliveCount = ships.filter(s => s.alive).length;
   // Check win: FFA = 1 ship left, Teams = 1 team left
@@ -7000,7 +6759,7 @@ function killShip(ship, killerId) {
       x: ship.x, y: ship.y,
       color: ship.color,
       killerColor: killerColor,
-      killerName: killerLabel,
+      killerName: killerName,
     };
     playFinaleExplosion();
     spawnExplosion(ship.x, ship.y, killerColor, 60, 300);
@@ -7019,8 +6778,9 @@ function render() {
   ctx.fillRect(0, 0, W, H);
 
   ctx.save();
-  // Camera transform
-  ctx.translate(W / 2 + screenShakeX, H / 2 + screenShakeY);
+  // Camera transform — shift view center down during tournament to clear top banner
+  const bannerOffset = matchMode === 'teams' ? 30 : 0;
+  ctx.translate(W / 2 + screenShakeX, H / 2 + screenShakeY + bannerOffset);
   ctx.scale(camZoom, camZoom);
   ctx.translate(-cameraX, -cameraY);
 
@@ -7450,8 +7210,11 @@ function render() {
       ctx.restore();
     }
 
+    // Fly-in fade alpha
+    const _shipAlpha = ship._flyAlpha != null ? ship._flyAlpha : 1;
+
     // Zoom-dependent glow ring — visible at distance, fades when close
-    const zoomRingAlpha = Math.max(0, Math.min(0.35, (0.5 - camZoom) * 1));
+    const zoomRingAlpha = Math.max(0, Math.min(0.35, (0.5 - camZoom) * 1)) * _shipAlpha;
     if (zoomRingAlpha > 0.01) {
       const ringR = ship.r * 6;
       const hc = ship.color;
@@ -7466,7 +7229,9 @@ function render() {
       ctx.fill();
     }
 
+    if (_shipAlpha < 1) ctx.globalAlpha = _shipAlpha;
     drawShipShape(ctx, ship.x, ship.y, ship.ang, ship.r, ship.color, ship.hp, ship.maxHp, ship.invuln, ship.shipType, ship.hpBarTimer, ship._designForced);
+    if (_shipAlpha < 1) ctx.globalAlpha = 1;
 
     // ── PASSIVE VISUAL OVERLAYS ──
     ctx.save();
@@ -7627,6 +7392,25 @@ function render() {
     }
   }
   ctx.globalAlpha = 1;
+
+  // Fly-in team name labels (world space)
+  if (flyInTeamLabels.length > 0) {
+    for (const label of flyInTeamLabels) {
+      if (label.alpha <= 0) continue;
+      ctx.save();
+      ctx.globalAlpha = label.alpha;
+      const _labelSize = matchMode === 'teams' ? 90 : 28;
+      ctx.font = `900 ${Math.round(_labelSize / camZoom)}px Orbitron, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.shadowColor = label.color;
+      ctx.shadowBlur = (_labelSize * 0.35) / camZoom;
+      ctx.fillStyle = label.color;
+      ctx.fillText(label.name, label.x, label.y);
+      ctx.fillText(label.name, label.x, label.y);
+      ctx.restore();
+    }
+  }
 
   ctx.restore();
 
@@ -7802,6 +7586,8 @@ function lerpHexColor(c1, c2, t) {
 }
 
 function getTeamColors() {
+  // In tournament mode, use pre-computed match colors for consistency
+  if (tourneyActive && _tourneyMatchColors) return [..._tourneyMatchColors];
   // Pick most common color from each team, avoiding duplicates
   const result = [];
   const used = new Set();
@@ -7837,7 +7623,7 @@ function buildPregameRoster() {
     tag.style.borderColor = ship.color + '55';
     tag.style.background = ship.color + '11';
     tag.style.animationDelay = `${i * 0.06}s`;
-    tag.appendChild(createShipIcon(ship.shipType, ship.color, 22, false));
+    tag.appendChild(createShipIcon(ship.shipType, ship.color, 22, ship._designForced));
     const nameSpan = document.createElement('span');
     nameSpan.style.color = ship.color;
     if (ship.name === 'MAGENTA') nameSpan.style.marginLeft = '2px';
@@ -7929,8 +7715,8 @@ function toggleLoadoutDropdown(teamIdx, btn, type) {
       const b = allBtns[0];
       if (b) {
         const count = stateArr[teamIdx].length;
-        const icon = type === 'designs' ? '🚀' : type === 'weapons' ? '⚔' : type === 'passives' ? '◈' : '↻';
-        b.textContent = count === 0 ? icon : count === 1 ? defs[stateArr[teamIdx][0]]?.name || stateArr[teamIdx][0] : `${icon}${count}`;
+        const icon = type === 'designs' ? 'Ships' : type === 'weapons' ? 'Weapons' : type === 'passives' ? 'Abilities' : 'Maneuvers';
+        b.textContent = count === 0 ? icon : count === 1 ? defs[stateArr[teamIdx][0]]?.name || stateArr[teamIdx][0] : `${icon} ×${count}`;
         b.classList.toggle('active', count > 0);
       }
       // Live-update slot icons when designs change
@@ -7945,7 +7731,7 @@ function toggleLoadoutDropdown(teamIdx, btn, type) {
             const oldIcon = slot.querySelector('.ship-icon, svg');
             if (oldIcon) {
               const designIdx = designs.length > 0 ? parseInt(designs[si % designs.length]) : shipIdx;
-              const newIcon = createShipIcon(designIdx, PILOT_COLORS[shipIdx], 22);
+              const newIcon = createShipIcon(designIdx, PILOT_COLORS[shipIdx], 22, true);
               slot.replaceChild(newIcon, oldIcon);
             }
           });
@@ -7957,7 +7743,7 @@ function toggleLoadoutDropdown(teamIdx, btn, type) {
     if (type === 'designs') {
       const colorIdx = parseInt(key);
       // Add inline SVG ship icon
-      const iconSvg = createShipIconSVG(colorIdx, PILOT_COLORS[colorIdx], 16);
+      const iconSvg = createShipIconSVG(colorIdx, PILOT_COLORS[colorIdx], 16, true);
       if (iconSvg) {
         iconSvg.style.flexShrink = '0';
         item.appendChild(iconSvg);
@@ -7993,7 +7779,7 @@ function renderTeamBuilder() {
   for (let i = 0; i < PILOT_NAMES.length; i++) {
     const el = document.createElement('div');
     el.className = 'picker-ship';
-    el.appendChild(createShipIcon(i, PILOT_COLORS[i], 22));
+    el.appendChild(createShipIcon(i, PILOT_COLORS[i], 22, true));
     const name = document.createElement('span');
     name.style.color = PILOT_COLORS[i];
     name.textContent = PILOT_NAMES[i];
@@ -8025,19 +7811,20 @@ function renderTeamBuilder() {
     const loadoutRow = document.createElement('div');
     loadoutRow.className = 'team-loadout-row';
     const loadoutTypes = [
-      { type: 'designs', arr: teamShipDesigns, defs: SHIP_DESIGN_DEFS, icon: '🚀' },
-      { type: 'weapons', arr: teamWeapons, defs: WEAPON_DEFS, icon: '⚔' },
-      { type: 'passives', arr: teamPassives, defs: PASSIVE_DEFS, icon: '◈' },
-      { type: 'maneuvers', arr: teamManeuvers, defs: MANEUVER_DEFS, icon: '↻' },
+      { type: 'designs', arr: teamShipDesigns, defs: SHIP_DESIGN_DEFS, icon: 'Ships' },
+      { type: 'weapons', arr: teamWeapons, defs: WEAPON_DEFS, icon: 'Weapons' },
+      { type: 'passives', arr: teamPassives, defs: PASSIVE_DEFS, icon: 'Abilities' },
+      { type: 'maneuvers', arr: teamManeuvers, defs: MANEUVER_DEFS, icon: 'Maneuvers' },
     ];
     for (const lt of loadoutTypes) {
       const btn = document.createElement('div');
       btn.className = 'team-wpn-btn' + (lt.arr[t] && lt.arr[t].length > 0 ? ' active' : '');
+      if (lt.type === 'passives' || lt.type === 'maneuvers') btn.style.fontSize = '8px';
       btn.setAttribute('data-type', lt.type);
       btn.setAttribute('data-team', t);
       btn.title = lt.type.charAt(0).toUpperCase() + lt.type.slice(1);
       const count = lt.arr[t] ? lt.arr[t].length : 0;
-      btn.textContent = count === 0 ? lt.icon : count === 1 ? lt.defs[lt.arr[t][0]]?.name || lt.arr[t][0] : `${lt.icon}${count}`;
+      btn.textContent = count === 0 ? lt.icon : count === 1 ? lt.defs[lt.arr[t][0]]?.name || lt.arr[t][0] : `${lt.icon} ×${count}`;
       const _type = lt.type, _t = t;
       btn.onclick = (e) => { e.stopPropagation(); toggleLoadoutDropdown(_t, btn, _type); };
       loadoutRow.appendChild(btn);
@@ -8057,7 +7844,7 @@ function renderTeamBuilder() {
       // If designs are overridden, show the design icon instead
       if (designs.length > 0) {
         const designIdx = parseInt(designs[i % designs.length]);
-        slot.appendChild(createShipIcon(designIdx, PILOT_COLORS[si], 22));
+        slot.appendChild(createShipIcon(designIdx, PILOT_COLORS[si], 22, true));
       } else {
         slot.appendChild(createShipIcon(si, PILOT_COLORS[si], 22));
       }
@@ -8197,6 +7984,7 @@ let tourneyRound = 0;
 let tourneyMatchIdx = 0;
 let tourneyActive = false; // true = tournament is in progress (playing matches)
 let tourneyAnimating = false; // true = bracket transition animation in progress
+let _tourneyMatchColors = null; // cached match colors for current tournament match
 let tourneyBaseScale = 1; // stored auto-scale factor for zoom in/out
 let tourneyEliminated = new Set(); // team indices that have been eliminated (for persistent dim)
 let tourneyModalSlot = -1; // which bracket slot is being edited
@@ -8232,6 +8020,50 @@ function initTourneyTeams() {
   tourneyActive = false;
 }
 
+function randomFillTournament() {
+  if (tourneyActive) return;
+  const shipsPerTeam = Math.max(2, Math.floor(16 / tourneySize));
+  // Shuffle all 16 ship indices
+  const allShips = Array.from({length: 16}, (_, i) => i);
+  for (let i = allShips.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [allShips[i], allShips[j]] = [allShips[j], allShips[i]];
+  }
+  let shipPool = [...allShips];
+  for (let t = 0; t < tourneySize; t++) {
+    const teamShips = [];
+    for (let s = 0; s < shipsPerTeam; s++) {
+      if (shipPool.length === 0) {
+        // Reshuffle if we run out
+        shipPool = [...allShips];
+        for (let i = shipPool.length - 1; i > 0; i--) {
+          const j = randInt(0, i);
+          [shipPool[i], shipPool[j]] = [shipPool[j], shipPool[i]];
+        }
+      }
+      teamShips.push(shipPool.pop());
+    }
+    const teamWeaps = teamShips.map(() => WEAPON_KEYS[randInt(0, WEAPON_KEYS.length - 1)]);
+    const teamPass = teamShips.map(() => PASSIVE_KEYS[randInt(0, PASSIVE_KEYS.length - 1)]);
+    const teamMan = teamShips.map(() => MANEUVER_KEYS[randInt(0, MANEUVER_KEYS.length - 1)]);
+    // Name from first two ship colors
+    const n1 = PILOT_NAMES[teamShips[0]];
+    const n2 = teamShips.length > 1 ? PILOT_NAMES[teamShips[1]] : '';
+    const teamName = n2 ? `${n1}/${n2}` : n1;
+    tourneyTeams[t] = {
+      name: teamName,
+      ships: teamShips,
+      weapons: teamWeaps,
+      passives: teamPass,
+      maneuvers: teamMan,
+      designs: [],
+      color: PILOT_COLORS[teamShips[0]]
+    };
+  }
+  buildBracket();
+  renderBracket();
+}
+
 function buildBracket() {
   tourneyBracket = [];
   let teamsInRound = tourneySize;
@@ -8265,9 +8097,79 @@ function getTourneyTeamColor(idx) {
   if (idx === null || idx === undefined) return 'rgba(255,255,255,0.15)';
   const t = tourneyTeams[idx];
   if (!t || t.ships.length === 0) return 'rgba(255,255,255,0.15)';
-  if (t.color) return t.color;
-  // Use first ship's color
-  return PILOT_COLORS[t.ships[0]] || '#888';
+  // Most common color on this team
+  const freq = {};
+  for (const si of t.ships) {
+    const c = PILOT_COLORS[si];
+    freq[c] = (freq[c] || 0) + 1;
+  }
+  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  return sorted[0] ? sorted[0][0] : '#888';
+}
+
+// Get colors for two tournament teams in a match, avoiding duplicates
+function getTourneyMatchColors(idx1, idx2) {
+  const c1 = getTourneyTeamColor(idx1);
+  const c2Raw = getTourneyTeamColor(idx2);
+  if (c2Raw !== c1) return [c1, c2Raw];
+  // Collision: second team uses its second-most-common color
+  const t2 = tourneyTeams[idx2];
+  if (!t2 || t2.ships.length === 0) return [c1, '#888'];
+  const freq = {};
+  for (const si of t2.ships) {
+    const c = PILOT_COLORS[si];
+    freq[c] = (freq[c] || 0) + 1;
+  }
+  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  const fallback = sorted.find(e => e[0] !== c1);
+  return [c1, fallback ? fallback[0] : '#888'];
+}
+
+function buildTeamBanner(roundLabel, tc) {
+  const banner = document.getElementById('tourney-progress-banner');
+  banner.innerHTML = '';
+
+  // Round/mode label
+  if (roundLabel) {
+    const roundDiv = document.createElement('div');
+    roundDiv.className = 'banner-round';
+    roundDiv.textContent = roundLabel;
+    banner.appendChild(roundDiv);
+  }
+
+  // Teams row
+  const teamsDiv = document.createElement('div');
+  teamsDiv.className = 'banner-teams';
+
+  for (let t = 0; t < Math.min(2, teamAssignments.length); t++) {
+    if (t > 0) {
+      const vs = document.createElement('span');
+      vs.className = 'banner-vs';
+      vs.textContent = 'VS';
+      teamsDiv.appendChild(vs);
+    }
+    const teamDiv = document.createElement('div');
+    teamDiv.className = 'banner-team';
+    const nameSpan = document.createElement('div');
+    nameSpan.className = 'banner-team-name';
+    nameSpan.style.color = tc[t] || '#888';
+    nameSpan.textContent = teamNames[t];
+    teamDiv.appendChild(nameSpan);
+
+    const shipsRow = document.createElement('div');
+    shipsRow.className = 'banner-team-ships';
+    const teamShips = ships.filter(s => s.team === t + 1);
+    teamShips.forEach((ship, idx) => {
+      const icon = createShipIconSVG(ship.shipType, ship.color, 14, ship._designForced);
+      icon.setAttribute('class', 'ship-icon');
+      icon.setAttribute('data-banner-ship-id', `${t}-${idx}`);
+      shipsRow.appendChild(icon);
+    });
+    teamDiv.appendChild(shipsRow);
+    teamsDiv.appendChild(teamDiv);
+  }
+  banner.appendChild(teamsDiv);
+  banner.classList.add('active');
 }
 
 function getRoundName(roundIdx, totalRounds) {
@@ -8363,8 +8265,9 @@ function renderBracket() {
       const designs = team.designs || [];
       const iconSize = isHuge ? 12 : isLarge ? 14 : 16;
       team.ships.forEach((si, idx) => {
-        const designIdx = designs.length > 0 ? parseInt(designs[idx % designs.length]) : si;
-        shipsRow.appendChild(createShipIconSVG(designIdx, PILOT_COLORS[si], iconSize));
+        const hasDesigns = designs.length > 0;
+        const designIdx = hasDesigns ? parseInt(designs[idx % designs.length]) : si;
+        shipsRow.appendChild(createShipIconSVG(designIdx, PILOT_COLORS[si], iconSize, hasDesigns));
       });
       slot.appendChild(shipsRow);
     }
@@ -8569,6 +8472,8 @@ function updateTourneyStatus() {
     startBtn.textContent = 'BEGIN';
     startBtn.disabled = true;
   }
+  const randomBtn = document.getElementById('tourney-random-btn');
+  if (randomBtn) randomBtn.style.display = tourneyActive ? 'none' : '';
 }
 
 // ─── Tournament Team Modal ──────────────────────────────────
@@ -8613,7 +8518,7 @@ function renderTourneyModal() {
   for (let i = 0; i < PILOT_NAMES.length; i++) {
     const el = document.createElement('div');
     el.className = 'picker-ship';
-    el.appendChild(createShipIcon(i, PILOT_COLORS[i], 22));
+    el.appendChild(createShipIcon(i, PILOT_COLORS[i], 22, true));
     const name = document.createElement('span');
     name.style.color = PILOT_COLORS[i];
     name.textContent = PILOT_NAMES[i];
@@ -8635,7 +8540,7 @@ function renderTourneyModal() {
       // Show design override icon if designs are selected
       if (_tourneyModalDesigns.length > 0) {
         const designIdx = parseInt(_tourneyModalDesigns[idx % _tourneyModalDesigns.length]);
-        chip.appendChild(createShipIcon(designIdx, PILOT_COLORS[si], 20));
+        chip.appendChild(createShipIcon(designIdx, PILOT_COLORS[si], 20, true));
       } else {
         chip.appendChild(createShipIcon(si, PILOT_COLORS[si], 20));
       }
@@ -8656,18 +8561,19 @@ function renderTourneyModal() {
   const loadoutsEl = document.getElementById('tourney-modal-loadouts');
   loadoutsEl.innerHTML = '';
   const loadoutTypes = [
-    { type: 'designs', arr: _tourneyModalDesigns, defs: SHIP_DESIGN_DEFS, icon: '🚀', keys: SHIP_DESIGN_KEYS },
-    { type: 'weapons', arr: _tourneyModalWeapons, defs: WEAPON_DEFS, icon: '⚔', keys: Object.keys(WEAPON_DEFS) },
-    { type: 'passives', arr: _tourneyModalPassives, defs: PASSIVE_DEFS, icon: '◈', keys: PASSIVE_KEYS },
-    { type: 'maneuvers', arr: _tourneyModalManeuvers, defs: MANEUVER_DEFS, icon: '↻', keys: MANEUVER_KEYS },
+    { type: 'designs', arr: _tourneyModalDesigns, defs: SHIP_DESIGN_DEFS, icon: 'Ships', keys: SHIP_DESIGN_KEYS },
+    { type: 'weapons', arr: _tourneyModalWeapons, defs: WEAPON_DEFS, icon: 'Weapons', keys: Object.keys(WEAPON_DEFS) },
+    { type: 'passives', arr: _tourneyModalPassives, defs: PASSIVE_DEFS, icon: 'Abilities', keys: PASSIVE_KEYS },
+    { type: 'maneuvers', arr: _tourneyModalManeuvers, defs: MANEUVER_DEFS, icon: 'Maneuvers', keys: MANEUVER_KEYS },
   ];
   for (const lt of loadoutTypes) {
     const btn = document.createElement('div');
     btn.className = 'team-wpn-btn' + (lt.arr.length > 0 ? ' active' : '');
+    if (lt.type === 'passives' || lt.type === 'maneuvers') btn.style.fontSize = '8px';
     btn.setAttribute('data-type', 'tourney-' + lt.type);
     btn.title = lt.type.charAt(0).toUpperCase() + lt.type.slice(1);
     const count = lt.arr.length;
-    btn.textContent = count === 0 ? lt.icon : count === 1 ? lt.defs[lt.arr[0]]?.name || lt.arr[0] : `${lt.icon}${count}`;
+    btn.textContent = count === 0 ? lt.icon : count === 1 ? lt.defs[lt.arr[0]]?.name || lt.arr[0] : `${lt.icon} ×${count}`;
     btn.onclick = (e) => { e.stopPropagation(); toggleTourneyLoadoutDropdown(lt, btn); };
     loadoutsEl.appendChild(btn);
   }
@@ -8698,7 +8604,7 @@ function toggleTourneyLoadoutDropdown(lt, btn) {
       }
       // Update button label
       const count = lt.arr.length;
-      btn.textContent = count === 0 ? lt.icon : count === 1 ? lt.defs[lt.arr[0]]?.name || lt.arr[0] : `${lt.icon}${count}`;
+      btn.textContent = count === 0 ? lt.icon : count === 1 ? lt.defs[lt.arr[0]]?.name || lt.arr[0] : `${lt.icon} ×${count}`;
       btn.classList.toggle('active', count > 0);
       // Live-update ship chip icons when designs change
       if (lt.type === 'designs') {
@@ -8710,7 +8616,7 @@ function toggleTourneyLoadoutDropdown(lt, btn) {
           const oldIcon = chip.querySelector('.ship-icon, svg');
           if (oldIcon) {
             const designIdx = designs.length > 0 ? parseInt(designs[ci % designs.length]) : shipIdx;
-            const newIcon = createShipIcon(designIdx, PILOT_COLORS[shipIdx], 20);
+            const newIcon = createShipIcon(designIdx, PILOT_COLORS[shipIdx], 20, true);
             chip.replaceChild(newIcon, oldIcon);
           }
         });
@@ -8720,7 +8626,7 @@ function toggleTourneyLoadoutDropdown(lt, btn) {
     const label = document.createElement('span');
     if (lt.type === 'designs') {
       const colorIdx = parseInt(key);
-      const iconSvg = createShipIconSVG(colorIdx, PILOT_COLORS[colorIdx], 16);
+      const iconSvg = createShipIconSVG(colorIdx, PILOT_COLORS[colorIdx], 16, true);
       if (iconSvg) {
         iconSvg.style.flexShrink = '0';
         item.appendChild(iconSvg);
@@ -8757,16 +8663,27 @@ function startTournament() {
   const container = document.getElementById('bracket-container');
   container.classList.add('tourney-focus');
 
-  // After a moment, fade out and start first match
+  // After a moment showing bracket, black flash to start first match
   setTimeout(() => {
     container.classList.remove('tourney-focus');
-    overlay.classList.remove('active');  // triggers fade-out
+    const flash = document.getElementById('bracket-flash');
+    flash.classList.add('active');
 
     setTimeout(() => {
-      overlay.classList.remove('bracket-transition');
+      // During black: force-hide bracket instantly, then start match
+      overlay.style.transition = 'none';
+      overlay.classList.remove('active', 'bracket-transition');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
       document.getElementById('tourney-sidebar').style.display = '';
       playNextTourneyMatch();
-    }, 550);
+      // Wait for game to render a frame before revealing
+      requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        flash.classList.remove('active');
+      });
+      });
+    }, 300);
   }, 2000);
 }
 
@@ -8804,13 +8721,8 @@ function playNextTourneyMatch() {
   document.getElementById('pregame-overlay').classList.add('hidden');
   pregame = true;
 
-  const roundName = getRoundName(tourneyRound, tourneyBracket.length);
-  const banner = document.getElementById('tourney-progress-banner');
-  banner.textContent = `${roundName} -- ${teamNames[0]} vs ${teamNames[1]}`;
-  banner.classList.add('active');
-
-  document.getElementById('alive-counter').style.display = 'none';
-  document.getElementById('camera-mode').style.display = 'none';
+  const tc = getTourneyMatchColors(match.team1, match.team2);
+  _tourneyMatchColors = tc;
 
   startMatch();
 }
@@ -8870,29 +8782,30 @@ function tourneyBracketTransition() {
   document.getElementById('tourney-progress-banner').classList.remove('active');
   clearAutoRestart();
 
-  // Prepare bracket while overlay is still hidden
+  // Prepare bracket and fade it in directly (no black screen here)
   const overlay = document.getElementById('tournament-overlay');
   overlay.classList.remove('active', 'bracket-transition');
   document.getElementById('tourney-sidebar').style.display = 'none';
   renderBracket();
 
   const container = document.getElementById('bracket-container');
+  snapToMatch(container, savedRound, savedMatch);
 
   // Fade in overlay on next frame
   requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     overlay.classList.add('active', 'bracket-transition');
 
-    // Wait for fade-in, then zoom
+    // After fade-in completes, start elimination sequence
     setTimeout(() => {
-      zoomToMatch(container, savedRound, savedMatch, () => {
-        doElimination();
-      });
+      doElimination();
     }, 550);
   });
   });
 
   function doElimination() {
+    const overlay = document.getElementById('tournament-overlay');
+    const container = document.getElementById('bracket-container');
     const matchEl = container.querySelector(
       `.bracket-match[data-round="${savedRound}"][data-match="${savedMatch}"]`
     );
@@ -8910,7 +8823,6 @@ function tourneyBracketTransition() {
     // Flash loser erratically
     if (loserSlot) loserSlot.classList.add('flash-eliminate');
     if (winnerSlot) winnerSlot.classList.add('highlight-winner');
-    playTourneyEliminate();
 
     setTimeout(() => {
       // Stop flashing, go permanently dim
@@ -8926,78 +8838,59 @@ function tourneyBracketTransition() {
           finishChampionSequence(winnerIdx);
           return;
         }
-        // Always zoom out smoothly first, then swap content
+
+        // Determine next match to pan toward
+        let nextRoundIdx, nextMatchIdx;
         if (!roundComplete) {
+          // Same round, next match
+          nextRoundIdx = savedRound;
+          nextMatchIdx = savedMatch + 1;
           tourneyMatchIdx = savedMatch + 1;
+        } else {
+          // Round complete — pan toward next round's first match
+          nextRoundIdx = savedRound + 1;
+          nextMatchIdx = 0;
         }
-        zoomOut(container, () => {
-          afterZoomOut();
+
+        // Pan camera to next match position, pause, then black flash to gameplay
+        panToMatch(container, nextRoundIdx, nextMatchIdx, () => {
+          // Highlight the next match with green ring, dim everything else
+          container.classList.add('tourney-focus');
+          const nextMatchEl = container.querySelector(
+            `.bracket-match[data-round="${nextRoundIdx}"][data-match="${nextMatchIdx}"]`
+          );
+          if (nextMatchEl) {
+            nextMatchEl.querySelectorAll('.bracket-slot').forEach(s => s.classList.add('current-match'));
+          }
+
+          // Brief pause showing the next match highlight
+          setTimeout(() => {
+            container.classList.remove('tourney-focus');
+            const flash = document.getElementById('bracket-flash');
+            flash.classList.add('active');
+            setTimeout(() => {
+              // During black: advance data if needed, force-hide bracket, start match
+              if (roundComplete) {
+                advanceTourneyRound_data();
+              }
+              overlay.style.transition = 'none';
+              overlay.classList.remove('active', 'bracket-transition');
+              overlay.offsetHeight;
+              overlay.style.transition = '';
+              tourneyAnimating = false;
+              document.getElementById('tourney-sidebar').style.display = '';
+              playNextTourneyMatch();
+              // Wait for game to render a frame before revealing
+              requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                flash.classList.remove('active');
+              });
+              });
+            }, 300);
+          }, 1200);
         });
       }, 600);
     }, 500);
-  }
-
-  function afterZoomOut() {
-    // Fade bracket out for content swap
-    container.classList.add('fade-content');
-    setTimeout(() => {
-      // If round complete, advance bracket data
-      if (roundComplete) {
-        advanceTourneyRound_data();
-      }
-      renderBracket();
-
-      // If round complete, highlight the advancing winner
-      if (roundComplete) {
-        requestAnimationFrame(() => {
-          const advancedSlots = container.querySelectorAll(
-            `.bracket-slot[data-team="${winnerIdx}"]`
-          );
-          advancedSlots.forEach(s => {
-            const m = s.closest('.bracket-match');
-            if (m && parseInt(m.dataset.round) === savedRound + 1) {
-              s.classList.add('highlight-winner');
-              s.style.animation = 'advanceGlow 0.8s ease-out';
-            }
-          });
-        });
-      }
-
-      // Fade bracket back in
-      requestAnimationFrame(() => {
-        container.classList.remove('fade-content');
-
-        // Wait for advance glow if round complete, then show next match focus
-        setTimeout(() => {
-          showNextMatchFocus();
-        }, roundComplete ? 1200 : 400);
-      });
-    }, 350);
-  }
-
-  function showNextMatchFocus() {
-    // Fade out, re-render with focus highlights, fade in
-    container.classList.add('fade-content');
-    setTimeout(() => {
-      renderBracket();
-      container.classList.add('tourney-focus');
-      requestAnimationFrame(() => {
-        container.classList.remove('fade-content');
-
-        setTimeout(() => {
-          // Fade overlay out, then start next match
-          container.classList.remove('tourney-focus');
-          overlay.classList.remove('active');
-
-          setTimeout(() => {
-            tourneyAnimating = false;
-            overlay.classList.remove('bracket-transition');
-            document.getElementById('tourney-sidebar').style.display = '';
-            playNextTourneyMatch();
-          }, 550);
-        }, 1800);
-      });
-    }, 350);
   }
 }
 
@@ -9020,6 +8913,7 @@ function advanceTourneyRound_data() {
 }
 
 const BRACKET_ZOOM_DURATION = 1200;
+const BRACKET_PAN_DURATION = 900;
 
 function zoomToMatch(container, roundIdx, matchIdx, callback) {
   const matchEl = container.querySelector(
@@ -9050,14 +8944,108 @@ function zoomToMatch(container, roundIdx, matchIdx, callback) {
   // Translate to center the match, then scale — origin stays fixed at center
   const tx = (ccx - mcx);
   const ty = (ccy - mcy);
+  container.style.transition = `transform ${BRACKET_ZOOM_DURATION}ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.4s ease`;
   container.style.transform = `translate(${tx}px, ${ty}px) scale(${zoomScale})`;
 
   setTimeout(() => { if (callback) callback(); }, BRACKET_ZOOM_DURATION + 50);
 }
 
+function panToMatch(container, roundIdx, matchIdx, callback) {
+  const matchEl = container.querySelector(
+    `.bracket-match[data-round="${roundIdx}"][data-match="${matchIdx}"]`
+  );
+  if (!matchEl) { if (callback) callback(); return; }
+
+  // Read current zoom level to maintain it
+  const currentTransform = container.style.transform || '';
+  const scaleMatch = currentTransform.match(/scale\(([\d.]+)\)/);
+  const currentZoom = scaleMatch ? parseFloat(scaleMatch[1]) : (tourneyBaseScale || 1);
+
+  // Temporarily reset to base scale to measure natural positions
+  const savedTransform = container.style.transform;
+  container.style.transition = 'none';
+  container.style.transform = `scale(${tourneyBaseScale})`;
+  container.offsetHeight; // force reflow
+
+  const baseScale = tourneyBaseScale || 1;
+  const containerRect = container.getBoundingClientRect();
+  const matchRect = matchEl.getBoundingClientRect();
+  const area = document.getElementById('tourney-bracket-area');
+  const areaRect = area.getBoundingClientRect();
+
+  const mcx = (matchRect.left + matchRect.width / 2 - containerRect.left) / baseScale;
+  const mcy = (matchRect.top + matchRect.height / 2 - containerRect.top) / baseScale;
+  const ccx = containerRect.width / baseScale / 2;
+  const ccy = containerRect.height / baseScale / 2;
+
+  // Restore previous transform instantly
+  container.style.transform = savedTransform;
+  container.offsetHeight; // force reflow
+
+  const tx = (ccx - mcx);
+  const ty = (ccy - mcy);
+  // Now animate the pan
+  container.style.transition = `transform ${BRACKET_PAN_DURATION}ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.4s ease`;
+  container.style.transform = `translate(${tx}px, ${ty}px) scale(${currentZoom})`;
+
+  setTimeout(() => { if (callback) callback(); }, BRACKET_PAN_DURATION + 50);
+}
+
 function zoomOut(container, callback) {
+  container.style.transition = `transform ${BRACKET_ZOOM_DURATION}ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.4s ease`;
   container.style.transform = `scale(${tourneyBaseScale})`;
   setTimeout(() => { if (callback) callback(); }, BRACKET_ZOOM_DURATION + 50);
+}
+
+function bracketFlash(duringFn, callback) {
+  const flash = document.getElementById('bracket-flash');
+  flash.classList.add('active');
+  setTimeout(() => {
+    if (duringFn) duringFn();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        flash.classList.remove('active');
+        setTimeout(() => { if (callback) callback(); }, 300);
+      });
+    });
+  }, 280);
+}
+
+// Position on a match instantly (no animation) — for use during flash
+function snapToMatch(container, roundIdx, matchIdx) {
+  const matchEl = container.querySelector(
+    `.bracket-match[data-round="${roundIdx}"][data-match="${matchIdx}"]`
+  );
+  if (!matchEl) return;
+
+  const baseScale = tourneyBaseScale || 1;
+  // Already at base scale after renderBracket during flash, measure directly
+  container.style.transition = 'none';
+  container.style.transform = `scale(${baseScale})`;
+  container.offsetHeight;
+
+  const containerRect = container.getBoundingClientRect();
+  const matchRect = matchEl.getBoundingClientRect();
+  const area = document.getElementById('tourney-bracket-area');
+  const areaRect = area.getBoundingClientRect();
+
+  const mcx = (matchRect.left + matchRect.width / 2 - containerRect.left) / baseScale;
+  const mcy = (matchRect.top + matchRect.height / 2 - containerRect.top) / baseScale;
+  const ccx = containerRect.width / baseScale / 2;
+  const ccy = containerRect.height / baseScale / 2;
+
+  const fullZoom = Math.min(
+    (areaRect.width * 0.35) / (matchRect.width / baseScale),
+    (areaRect.height * 0.4) / (matchRect.height / baseScale),
+    baseScale * 4
+  );
+  const zoomScale = baseScale + (fullZoom - baseScale) * 0.325;
+  const tx = (ccx - mcx);
+  const ty = (ccy - mcy);
+
+  container.style.transform = `translate(${tx}px, ${ty}px) scale(${zoomScale})`;
+  container.offsetHeight;
+  container.style.transition = '';
 }
 
 function finishChampionSequence(winnerIdx) {
@@ -9074,6 +9062,7 @@ function finishChampionSequence(winnerIdx) {
     setTimeout(() => {
       tourneyAnimating = false;
       tourneyActive = false;
+      document.getElementById('settings-btn').classList.remove('match-hidden');
       overlay.classList.remove('bracket-transition');
       overlay.classList.add('champion-screen');
       document.getElementById('tourney-sidebar').style.display = '';
@@ -9147,6 +9136,8 @@ function exitTournament() {
     tourneyEliminated.clear();
   }
   document.getElementById('tournament-overlay').classList.remove('active', 'bracket-transition', 'champion-screen');
+  document.getElementById('bracket-flash').classList.remove('active');
+  document.getElementById('bracket-container').style.transform = '';
   document.getElementById('tourney-sidebar').style.display = '';
   document.getElementById('tourney-progress-banner').classList.remove('active');
   document.getElementById('winner-overlay').classList.remove('show');
@@ -9154,9 +9145,12 @@ function exitTournament() {
   document.getElementById('camera-mode').style.display = '';
   clearAutoRestart();
   matchMode = 'ffa';
+  flyInPhase = false;
+  flyInTeamLabels = [];
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === 'ffa'));
   document.getElementById('pregame-overlay').classList.remove('hidden');
   pregame = true;
+  document.getElementById('settings-btn').classList.remove('match-hidden');
   gameOver = false;
   init();
 }
@@ -9371,51 +9365,6 @@ function startMatch() {
     init();
   }
   ensureAudio();
-  // ═══ STARCHIP DEMO INTEGRATION ═══
-  const _scLineup = localStorage.getItem('starchip_lineup');
-  let _starchipConfigs = null;
-  let _starchipTeams = false;
-  // Check localStorage first, fall back to saved global (rematch)
-  const _scRaw = _scLineup || (_starchipSavedLineup ? JSON.stringify(_starchipSavedLineup) : null);
-  if (_scRaw) {
-    if (_scLineup) localStorage.removeItem('starchip_lineup');
-    try {
-      const _scData = JSON.parse(_scRaw);
-      // Support both array (legacy) and object { ships, teams } format
-      const _scShips = Array.isArray(_scData) ? _scData : _scData.ships;
-      _starchipTeams = !Array.isArray(_scData) && _scData.teams;
-      if (Array.isArray(_scShips) && _scShips.length >= 2) {
-        settings.numShips = _scShips.length;
-        settings.uniqueShips = true; // force unique ship shapes
-        _starchipConfigs = _scShips;
-        _starchipSavedLineup = _scData; // save for rematch
-        // Set up team mode if requested
-        if (_starchipTeams) {
-          matchMode = 'teams';
-          // Group ships by playerName to build team assignments
-          const playerGroups = {};
-          _scShips.forEach((s, idx) => {
-            const pn = s.playerName || 'Player';
-            if (!playerGroups[pn]) playerGroups[pn] = [];
-            playerGroups[pn].push(idx);
-          });
-          // Build teamAssignments: array of arrays of ship indices
-          // Here indices refer to position in the flat _scShips array (0..n-1)
-          teamAssignments = Object.values(playerGroups);
-          teamNames = Object.keys(playerGroups);
-          // Clear any leftover team weapon/design/passive pools
-          teamWeapons = teamAssignments.map(() => []);
-          teamShipDesigns = teamAssignments.map(() => []);
-          teamPassives = teamAssignments.map(() => []);
-          teamManeuvers = teamAssignments.map(() => []);
-        } else {
-          matchMode = 'ffa';
-        }
-        init();
-      }
-    } catch(e) { console.warn('StarChip lineup parse error', e); }
-  }
-  // ═══ END STARCHIP INTEGRATION ═══
   for (let i = 0; i < ships.length; i++) {
     const ship = ships[i];
     const p = PRESET_PROFILES[ship.shipType];
@@ -9432,32 +9381,6 @@ function startMatch() {
     ship.weapon = getWeapon(ship.shipType, ship.team || 0);
     ship.passive = getPassive(ship.shipType, ship.team || 0);
     ship.maneuver = getManeuver(ship.shipType, ship.team || 0);
-    // ═══ STARCHIP OVERRIDE ═══
-    const _scKey = ship._scIdx !== undefined ? ship._scIdx : i;
-    if (_starchipConfigs && _starchipConfigs[_scKey]) {
-      const _sc = _starchipConfigs[_scKey];
-      ship.shipType = _sc.design;
-      ship.color = _sc.color;
-      ship.origColor = _sc.color;
-      ship.playerName = _sc.playerName || null;
-      ship.name = (_sc.weapon) ? generateShipName(_sc.design, _sc._ci, _sc.weapon, _sc.passive, _sc.maneuver, _sc._ti) : (colorName(_sc.color) + ' ' + PILOT_NAMES[_sc.design]).trim();
-      if (WEAPON_DEFS[_sc.weapon]) ship.weapon = {...WEAPON_DEFS[_sc.weapon]};
-      if (_sc.passive) ship.passive = _sc.passive;
-      if (_sc.maneuver) ship.maneuver = _sc.maneuver;
-      // Temperament override
-      if (_sc.temperament !== undefined && _sc.temperament >= 0 && _sc.temperament < PRESET_PROFILES.length) {
-        const tp = PRESET_PROFILES[_sc.temperament];
-        ship.aiBehavior = tp.behavior;
-        ship.aggroPhase = tp.aggroPhase;
-        ship.aggroSpeed = tp.aggroSpeed;
-        ship.rockShooter = tp.rockShooter;
-        ship.aimBaseline = tp.aimBaseline;
-        ship.aimRange = tp.aimRange;
-        ship.aimSpeed = tp.aimSpeed;
-        ship.aimPhase = tp.aimPhase;
-      }
-    }
-    // ═══ END STARCHIP OVERRIDE ═══
     ship.maneuverCooldown = rand(3, 8);
     ship.maneuverActive = false;
     ship.maneuverTimer = 0;
@@ -9491,36 +9414,48 @@ function startMatch() {
     ship.lastAttackerTime = 0;
   }
   pregame = false;
+  document.getElementById('settings-btn').classList.add('match-hidden');
   document.getElementById('pregame-overlay').classList.add('hidden');
   document.getElementById('settings-panel').classList.remove('open');
+
+  // Hide HUD overlays in FFA (teams already hides them for tournament)
+  if (matchMode !== 'teams') {
+    document.getElementById('alive-counter').style.display = 'none';
+    document.getElementById('camera-mode').style.display = 'none';
+  }
+
+  // Show team banner for all team battles
+  if (matchMode === 'teams') {
+    const tc = (tourneyActive && _tourneyMatchColors) ? [..._tourneyMatchColors] : getTeamColors();
+    const label = tourneyActive ? getRoundName(tourneyRound, tourneyBracket.length) : 'TEAM BATTLE';
+    buildTeamBanner(label, tc);
+    document.getElementById('alive-counter').style.display = 'none';
+    document.getElementById('camera-mode').style.display = 'none';
+  }
 
   // Enter countdown phase (skip for match logger to keep data collection fast)
   if (settings.matchLogger) {
     showScoreboard = true;
   } else {
     countdown = true;
-    const cdDur = tourneyActive ? 3 : COUNTDOWN_DURATION;
-    countdownTimer = cdDur;
-    _lastCountdownSec = cdDur;
-    playCountdownTick(cdDur);
-    buildCountdownRoster();
-    document.getElementById('countdown-bets').textContent = matchMode === 'teams' ? 'CHOOSE YOUR TEAM!' : 'PLACE YOUR BETS!';
-    document.getElementById('countdown-overlay').classList.remove('hidden');
-  }
-
-  // ═══ STARCHIP: Pre-position camera so countdown doesn't have jarring zoom ═══
-  if (_starchipConfigs && ships.length > 0) {
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const s of ships) {
-      minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
-      minY = Math.min(minY, s.y); maxY = Math.max(maxY, s.y);
+    if (matchMode === 'teams') {
+      setupFlyIn();
+      // Minimal overlay: just big countdown number + bets text, no roster
+      document.getElementById('countdown-timer').textContent = '';
+      document.getElementById('countdown-loadout').textContent = '';
+      document.getElementById('countdown-roster').innerHTML = '';
+      document.getElementById('countdown-roster').style.display = 'none';
+      document.getElementById('countdown-bets').textContent = 'CHOOSE YOUR TEAM!';
+      const _cdOverlay = document.getElementById('countdown-overlay');
+      _cdOverlay.classList.remove('hidden');
+      _cdOverlay.style.background = 'rgba(0,0,0,0.15)';
+    } else {
+      flyInPhase = false;
+      countdownTimer = COUNTDOWN_DURATION;
+      buildCountdownRoster();
+      document.getElementById('countdown-bets').textContent = 'PLACE YOUR BETS!';
+      document.getElementById('countdown-overlay').classList.remove('hidden');
     }
-    cameraX = targetCamX = (minX + maxX) / 2;
-    cameraY = targetCamY = (minY + maxY) / 2;
-    const camPad = 200 + ships.length * 15;
-    const zX = W / (maxX - minX + camPad);
-    const zY = H / (maxY - minY + camPad);
-    camZoom = targetZoom = Math.max(0.15, Math.min(1.5, Math.min(zX, zY)));
   }
 }
 
@@ -9577,7 +9512,7 @@ function buildCountdownRoster() {
       teamCol.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:12px; flex:1; min-width:0;';
       // Team header
       const th = document.createElement('div');
-      th.style.cssText = 'font-family:Orbitron,sans-serif; font-size:32px; font-weight:900; letter-spacing:8px; text-shadow:0 0 40px currentColor;';
+      th.style.cssText = `font-family:Orbitron,sans-serif; font-size:32px; font-weight:900; letter-spacing:8px; text-shadow:0 0 40px currentColor;`;
       th.style.color = tc[t] || '#888';
       th.textContent = teamNames[t];
       teamCol.appendChild(th);
@@ -9591,7 +9526,7 @@ function buildCountdownRoster() {
         const wrap = document.createElement('div');
         wrap.style.cssText = `opacity:0; animation:rosterIn 0.2s ease forwards; width:${iconSize}px; height:${iconSize}px; display:flex; align-items:center; justify-content:center;`;
         wrap.style.animationDelay = `${0.3 + si * 0.06}s`;
-        wrap.appendChild(createShipIcon(ship.shipType, ship.color, iconSize, false));
+        wrap.appendChild(createShipIcon(ship.shipType, ship.color, iconSize, ship._designForced));
         iconsRow.appendChild(wrap);
       }
       teamCol.appendChild(iconsRow);
@@ -9616,7 +9551,7 @@ function buildCountdownRoster() {
       if (showAny) {
         const header = document.createElement('div');
         header.className = 'cd-ship-header';
-        header.appendChild(createShipIcon(ship.shipType, ship.color, 27, false));
+        header.appendChild(createShipIcon(ship.shipType, ship.color, 27, ship._designForced));
         const nameSpan = document.createElement('span');
         nameSpan.className = 'cd-ship-name';
         nameSpan.style.color = ship.color;
@@ -9641,7 +9576,7 @@ function buildCountdownRoster() {
         nameSpan.style.marginBottom = '4px';
         nameSpan.textContent = ship.name.length > 5 ? '\u00a0\u00a0' + ship.name : ship.name;
         card.appendChild(nameSpan);
-        const icon = createShipIcon(ship.shipType, ship.color, 36, false);
+        const icon = createShipIcon(ship.shipType, ship.color, 36, ship._designForced);
         icon.style.display = 'block';
         icon.style.margin = '0 auto';
         card.appendChild(icon);
@@ -9651,17 +9586,94 @@ function buildCountdownRoster() {
   }
 }
 
+function setupFlyIn() {
+  flyInPhase = true;
+  flyInElapsed = 0;
+  flyInTeamLabels = [];
+  const cx = CFG.WORLD_W / 2, cy = CFG.WORLD_H / 2;
+  const numTeams = teamAssignments.length;
+  const _tcArr = getTeamColors();
+
+  for (let t = 0; t < numTeams; t++) {
+    const teamShips = ships.filter(s => s.team === t + 1);
+    if (teamShips.length === 0) continue;
+    let avgX = 0, avgY = 0;
+    for (const s of teamShips) { avgX += s.x; avgY += s.y; }
+    avgX /= teamShips.length; avgY /= teamShips.length;
+
+    const dx = avgX - cx, dy = avgY - cy;
+    const d = Math.max(1, Math.hypot(dx, dy));
+    const nx = dx / d, ny = dy / d;
+    const flyDist = 400;
+
+    for (const s of teamShips) {
+      s._flyTargetX = s.x; s._flyTargetY = s.y;
+      s._flyStartX = s.x + nx * flyDist; s._flyStartY = s.y + ny * flyDist;
+      s._flyTeamIdx = t;
+      s.x = s._flyStartX; s.y = s._flyStartY;
+    }
+
+    let maxY = -Infinity;
+    for (const s of teamShips) maxY = Math.max(maxY, s._flyTargetY);
+
+    // 2-team: place labels between formation and center; 3+: below formation
+    let labelX, labelY;
+    if (numTeams === 2) {
+      // Position label on the center-facing side of the formation
+      labelX = avgX + (cx - avgX) * 0.45;
+      labelY = avgY + (cy - avgY) * 0.45;
+    } else {
+      labelX = avgX;
+      labelY = maxY + 100;
+    }
+    flyInTeamLabels.push({
+      x: labelX, y: labelY,
+      name: teamNames[t], color: _tcArr[t], alpha: 0, arrived: false
+    });
+  }
+
+  const totalFlyIn = (numTeams - 1) * FLY_IN_STAGGER + FLY_IN_DURATION + 0.5;
+  countdownTimer = Math.max(COUNTDOWN_DURATION, totalFlyIn + 1);
+
+  // Snap camera to frame final target positions so we start zoomed in properly
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const s of ships) {
+    if (s._flyTargetX == null) continue;
+    minX = Math.min(minX, s._flyTargetX); maxX = Math.max(maxX, s._flyTargetX);
+    minY = Math.min(minY, s._flyTargetY); maxY = Math.max(maxY, s._flyTargetY);
+  }
+  const camPad = 200 + ships.length * 15;
+  const spreadX = maxX - minX + camPad;
+  const spreadY = maxY - minY + camPad;
+  cameraX = (minX + maxX) / 2;
+  cameraY = (minY + maxY) / 2;
+  camZoom = Math.max(0.15, Math.min(1.5, Math.min(W / spreadX, H / spreadY)));
+}
+
 function endCountdown() {
   countdown = false;
   countdownTimer = 0;
-  _lastCountdownSec = -1;
-  playMatchStart();
-  document.getElementById('countdown-overlay').classList.add('hidden');
+  flyInPhase = false;
+  flyInTeamLabels = [];
+  // Snap any fly-in ships to final positions
+  for (const ship of ships) {
+    if (ship._flyTargetX != null) { ship.x = ship._flyTargetX; ship.y = ship._flyTargetY; }
+    delete ship._flyAlpha;
+  }
+  // Reset countdown overlay styles
+  document.getElementById('countdown-timer').style.fontSize = '';
+  document.getElementById('countdown-roster').style.display = '';
+  const _cdOv = document.getElementById('countdown-overlay');
+  _cdOv.style.background = '';
+  _cdOv.classList.add('hidden');
   showScoreboard = true;
 }
 
 function showWinner() {
   logMatchData();
+
+  // Hide team banner
+  document.getElementById('tourney-progress-banner').classList.remove('active');
 
   // Tournament mode: skip results screen, go straight to bracket transition
   if (tourneyActive) {
@@ -9673,6 +9685,7 @@ function showWinner() {
 
   const ov = document.getElementById('winner-overlay');
   ov.classList.add('show');
+  document.getElementById('settings-btn').classList.remove('match-hidden');
   showScoreboard = false;
   // Force animation replay on persistent elements
   for (const el of [ov.querySelector('h2'), document.getElementById('winner-name'), document.getElementById('restart-btn')]) {
@@ -9691,7 +9704,7 @@ function showWinner() {
       nameEl.style.color = '#888';
     }
   } else if (winner) {
-    nameEl.textContent = winner.playerName ? winner.playerName + ' — ' + winner.name : winner.name;
+    nameEl.textContent = winner.name;
     nameEl.style.color = winner.color;
   } else {
     nameEl.textContent = 'DRAW';
@@ -9722,7 +9735,7 @@ function showWinner() {
   }
 
   if (matchMode === 'teams') {
-    // Team rankings
+    // Team rankings — condensed: team name + kills, ship icons underneath
     const _rcArr = getTeamColors();
     const teamStats = [];
     for (let t = 0; t < teamAssignments.length; t++) {
@@ -9739,7 +9752,7 @@ function showWinner() {
     });
     let delay = 0;
     teamStats.forEach((ts, rank) => {
-      // Team header row
+      // Team header row: rank, color dot, name, kills
       const teamRow = document.createElement('div');
       teamRow.className = 'rank-row' + (rank === 0 ? ' top1' : rank === 1 ? ' top2' : rank === 2 ? ' top3' : '');
       teamRow.style.animationDelay = `${0.35 + delay * 0.08}s`;
@@ -9759,10 +9772,6 @@ function showWinner() {
       nameSpan.style.color = _rcArr[ts.idx] || '#fff';
       nameSpan.textContent = teamNames[ts.idx];
       nameBlock.appendChild(nameSpan);
-      const statusSpan = document.createElement('span');
-      statusSpan.className = 'rank-loadout';
-      statusSpan.textContent = ts.anyAlive ? `survived ${fmtTime(gameTime)}` : `eliminated ${fmtTime(ts.lastDeath)}`;
-      nameBlock.appendChild(statusSpan);
       teamRow.appendChild(nameBlock);
       const causeSpan = document.createElement('span');
       causeSpan.className = 'rank-cause';
@@ -9777,46 +9786,27 @@ function showWinner() {
       timeSpan.textContent = '';
       teamRow.appendChild(timeSpan);
       container.appendChild(teamRow);
-      // Individual ships under team
+
+      // Ship icons row underneath
+      const iconsRow = document.createElement('div');
+      iconsRow.className = 'rank-row';
+      iconsRow.style.animationDelay = `${0.35 + delay * 0.08}s`;
+      iconsRow.style.paddingLeft = '48px';
+      iconsRow.style.minHeight = '0';
+      iconsRow.style.gap = '4px';
+      delay++;
+      // Sort: alive ships first
       const sortedShips = [...ts.teamShips].sort((a, b) => {
         if (a.alive && !b.alive) return -1;
         if (!a.alive && b.alive) return 1;
-        return (b.deathTime || 0) - (a.deathTime || 0);
+        return 0;
       });
-      sortedShips.forEach(ship => {
-        const row = document.createElement('div');
-        row.className = 'rank-row';
-        row.style.animationDelay = `${0.35 + delay * 0.08}s`;
-        row.style.paddingLeft = '28px';
-        delay++;
-        const numSpan2 = document.createElement('span');
-        numSpan2.className = 'rank-num';
-        numSpan2.textContent = '';
-        row.appendChild(numSpan2);
-        row.appendChild(createShipIcon(ship.shipType, ship.color, 24, false));
-        const nb2 = document.createElement('div');
-        nb2.className = 'rank-name-block';
-        const ns2 = document.createElement('span');
-        ns2.className = 'rank-name';
-        ns2.style.color = ship.color;
-        ns2.style.fontSize = '12px';
-        ns2.textContent = ship.playerName ? ship.playerName + ' — ' + ship.name : ship.name;
-        nb2.appendChild(ns2);
-        row.appendChild(nb2);
-        const cs2 = document.createElement('span');
-        cs2.className = 'rank-cause';
-        cs2.textContent = ship.alive ? '—' : (ship.killedBy === 'ASTEROID' ? 'ASTEROID' : `✕ ${ship.killedBy}`);
-        row.appendChild(cs2);
-        const ks2 = document.createElement('span');
-        ks2.className = 'rank-kills';
-        ks2.textContent = ship.kills;
-        row.appendChild(ks2);
-        const ts2 = document.createElement('span');
-        ts2.className = 'rank-time';
-        ts2.textContent = fmtTime(ship.alive ? gameTime : ship.deathTime);
-        row.appendChild(ts2);
-        container.appendChild(row);
-      });
+      for (const ship of sortedShips) {
+        const icon = createShipIcon(ship.shipType, ship.color, 22, ship._designForced);
+        if (!ship.alive) icon.style.opacity = '0.35';
+        iconsRow.appendChild(icon);
+      }
+      container.appendChild(iconsRow);
     });
   } else {
     // FFA rankings
@@ -9831,13 +9821,13 @@ function showWinner() {
     numSpan.className = 'rank-num';
     numSpan.textContent = i + 1;
     row.appendChild(numSpan);
-    row.appendChild(createShipIcon(ship.shipType, ship.color, 32, false));
+    row.appendChild(createShipIcon(ship.shipType, ship.color, 32, ship._designForced));
     const nameBlock = document.createElement('div');
     nameBlock.className = 'rank-name-block';
     const nameSpan = document.createElement('span');
     nameSpan.className = 'rank-name';
     nameSpan.style.color = ship.color;
-    nameSpan.textContent = ship.playerName ? ship.playerName + ' — ' + ship.name : ship.name;
+    nameSpan.textContent = ship.name;
     nameBlock.appendChild(nameSpan);
     const showAnyTag = settings.showWeaponTag || settings.showPassiveTag || settings.showManeuverTag;
     if (showAnyTag) {
@@ -9867,15 +9857,17 @@ function showWinner() {
     });
   }
 
-  // Scale entire results to fit screen
-  const content = document.getElementById('winner-content');
-  content.style.transform = '';
+  // Scale rankings to fit screen — measure after layout
+  container.style.transform = '';
   requestAnimationFrame(() => {
-    const contentH = content.scrollHeight;
-    const availH = window.innerHeight - 40; // 20px padding top + bottom
-    if (contentH > availH && availH > 0) {
-      const scale = availH / contentH;
-      content.style.transform = `scale(${scale})`;
+    const ov = document.getElementById('winner-overlay');
+    const rankingsTop = container.offsetTop;
+    const rankingsH = container.scrollHeight;
+    const availH = window.innerHeight - rankingsTop - 80; // leave room for button + padding
+    if (rankingsH > availH && availH > 0) {
+      const scale = availH / rankingsH;
+      container.style.transform = `scale(${scale})`;
+      container.style.transformOrigin = 'top center';
     }
   });
 
@@ -9887,19 +9879,21 @@ function showWinner() {
   // Tournament mode: change button text and auto-advance
   if (tourneyActive) {
     restartBtn.textContent = 'NEXT MATCH';
-  } else if (_starchipSavedLineup) {
-    restartBtn.textContent = 'REMATCH';
-    const arenaBtn = document.getElementById('arena-btn');
-    arenaBtn.style.display = '';
-    arenaBtn.style.animationDelay = `${0.45 + totalRows * 0.08}s`;
   } else {
     restartBtn.textContent = 'NEW MATCH';
+  }
+
+  // Hide restart button when auto-restart is active
+  if (settings.autoRestart || tourneyActive) {
+    restartBtn.classList.add('auto-hidden');
+  } else {
+    restartBtn.classList.remove('auto-hidden');
   }
 
   // Auto-restart countdown
   clearAutoRestart();
   if (settings.autoRestart || tourneyActive) {
-    let remaining = 10;
+    let remaining = (settings.matchLogger && !tourneyActive) ? 3 : 5;
     const cdEl = document.getElementById('auto-restart-countdown');
     cdEl.style.display = 'block';
     cdEl.innerHTML = `NEXT MATCH IN <span class="countdown-num">${remaining}</span>`;
@@ -9930,12 +9924,6 @@ document.querySelectorAll('#speed-selector button').forEach(btn => {
 });
 
 document.getElementById('restart-btn').addEventListener('click', () => {
-  // ═══ STARCHIP: Rematch with same lineup ═══
-  if (_starchipSavedLineup) {
-    clearAutoRestart();
-    startMatch();
-    return;
-  }
   if (tourneyActive) {
     tourneyRestartHandler();
     return;
@@ -9943,15 +9931,6 @@ document.getElementById('restart-btn').addEventListener('click', () => {
   clearAutoRestart();
   applyChaosMode();
   init();
-});
-
-document.getElementById('arena-btn').addEventListener('click', () => {
-  _starchipSavedLineup = null;
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99999;opacity:0;transition:opacity 0.4s ease';
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
-  setTimeout(() => { window.location.href = 'arena.html'; }, 450);
 });
 
 // ─── CAMERA MODE TOGGLE ──────────────────────────────────────
@@ -10056,28 +10035,10 @@ function gameLoop(time) {
 
 initStars();
 init();
-
-// Sync toggle states on load
-document.querySelectorAll('.setting-toggle[data-setting]').forEach(el => {
-  const key = el.dataset.setting;
-  if (settings[key] !== undefined) el.classList.toggle('on', settings[key]);
-});
 requestAnimationFrame(gameLoop);
-
-// Fade out entry overlay
-requestAnimationFrame(() => {
-  const fo = document.getElementById('fadeOverlay');
-  if (fo) { fo.style.opacity = '0'; setTimeout(() => fo.remove(), 600); }
-});
 
 // ─── PWA SERVICE WORKER ──────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  // ═══ STARCHIP AUTO-START ═══
-  // If launched from arena with a lineup, skip pregame and start immediately
-  if (localStorage.getItem('starchip_lineup')) {
-    startMatch();
-  }
-
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
